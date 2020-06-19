@@ -154,6 +154,9 @@ include_directories(
 add_executable(can_topic_adapter src/can_topic_adapter.cpp)
 target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
 
+add_executable(vehicle_controller src/vehicle_controller.cpp)
+target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##

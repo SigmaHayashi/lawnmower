@@ -1,16 +1,14 @@
 #include "ros/ros.h"
 #include "lawnmower/command_to_lawnmower.h"
 #include "lawnmower/command_from_lawnmower.h"
-//#include "socketcan_bridge/socketcan_to_topic.h"
-//#include "socketcan_bridge/topic_to_socketcan.h"
 #include "can_msgs/Frame.h"
 
 // LawnMowerに送るコマンド
 int command_speed[2] = {0}; // left rightの順
 
 // LawnMowerから送られてくる情報
-int lawnmower_engine_speed = 0;
-int lawnmower_speed[2] = {0}; // left rightの順
+int lawnmower_engine_speed = 0; // [rpm]
+int lawnmower_speed[2] = {0}; // left rightの順 [rpm]
 
 
 void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
@@ -31,7 +29,7 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
 }
 
 boost::array<uint8_t, 8> makeCommandData(){
-    boost::array<uint8_t, 8> data;
+    boost::array<uint8_t, 8> data = {0};
 
     // 速度指令
     if(command_speed[0] == 2 && command_speed[1] == 2){ //2速前進
@@ -82,14 +80,6 @@ int main(int argc, char** argv){
     ros::Rate loop_rate(20);
 
     while(ros::ok()){
-        /*
-        lawnmower::command_from_lawnmower msg;
-        msg.engine_speed = 0;
-        msg.speed_left = 0;
-        msg.speed_right = 0;
-
-        pub_command_from_lawnmower.publish(msg);
-        */
 
         /*
         boost::array<uint8_t, 8> msg_data;
@@ -122,7 +112,6 @@ int main(int argc, char** argv){
             msg_data[2] = 8;
             msg_data[1] = 8;
         }*/
-
 
         can_msgs::Frame msg_topic_to_socketcan;
         msg_topic_to_socketcan.id = 0x410;
