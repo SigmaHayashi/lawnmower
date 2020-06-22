@@ -81,38 +81,6 @@ int main(int argc, char** argv){
 
     while(ros::ok()){
 
-        /*
-        boost::array<uint8_t, 8> msg_data;
-
-        if(command_speed[0] == 2 && command_speed[1] == 2){ //2速前進
-            msg_data[2] = 6;
-            msg_data[1] = 6;
-        }
-        else if(command_speed[0] == 4 && command_speed[1] == 4){ //4速前進
-            msg_data[2] = 4;
-            msg_data[1] = 4;
-        }
-        else if(command_speed[0] == -2 && command_speed[1] == -2){ //2速後退
-            msg_data[2] = 10;
-            msg_data[1] = 10;
-        }
-        else if(command_speed[0] == -4 && command_speed[1] == -4){ //4速後退
-            msg_data[2] = 12;
-            msg_data[1] = 12;
-        }
-        else if(command_speed[0] == 4 && command_speed[1] == -4){ //その場右旋回
-            msg_data[2] = 4;
-            msg_data[1] = 12;
-        }
-        else if(command_speed[0] == -4 && command_speed[1] == 4){ //その場左旋回
-            msg_data[2] = 12;
-            msg_data[1] = 4;
-        }
-        else{ // 停止
-            msg_data[2] = 8;
-            msg_data[1] = 8;
-        }*/
-
         can_msgs::Frame msg_topic_to_socketcan;
         msg_topic_to_socketcan.id = 0x410;
         msg_topic_to_socketcan.dlc = 8;
@@ -130,6 +98,5 @@ int main(int argc, char** argv){
 
         loop_rate.sleep();
     }
-
-    //ros::spin();
+    
 }
