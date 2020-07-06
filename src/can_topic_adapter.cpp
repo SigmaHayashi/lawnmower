@@ -24,6 +24,54 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
         lawnmower_engine_speed = msg->data[0];
         lawnmower_speed[0] = (msg->data[4] << 8) | msg->data[3];
         lawnmower_speed[1] = (msg->data[2] << 8) | msg->data[1];
+        switch(msg->data[7]){
+            case 0:
+            lawnmower_speed[0] *= 0;
+            lawnmower_speed[1] *= 0;
+            break;
+
+            case 1:
+            lawnmower_speed[0] *= 1;
+            lawnmower_speed[1] *= 0;
+            break;
+            
+            case 2:
+            lawnmower_speed[0] *= -1;
+            lawnmower_speed[1] *= 0;
+            break;
+            
+            case 3:
+            lawnmower_speed[0] *= 0;
+            lawnmower_speed[1] *= -1;
+            break;
+            
+            case 4:
+            lawnmower_speed[0] *= 1;
+            lawnmower_speed[1] *= -1;
+            break;
+            
+            case 5:
+            lawnmower_speed[0] *= -1;
+            lawnmower_speed[1] *= -1;
+            break;
+            
+            case 6:
+            lawnmower_speed[0] *= 0;
+            lawnmower_speed[1] *= 1;
+            break;
+            
+            case 7:
+            lawnmower_speed[0] *= 1;
+            lawnmower_speed[1] *= 1;
+            break;
+            
+            case 8:
+            lawnmower_speed[0] *= -1;
+            lawnmower_speed[1] *= 1;
+            break;
+        }
+        lawnmower_speed[0] = lawnmower_speed[0] * 14.06 / (2 * M_PI) / 60 * 1000;
+        lawnmower_speed[1] = lawnmower_speed[1] * 14.06 / (2 * M_PI) / 60 * 1000;
         //ROS_INFO("LawnMower speed : %d, %d", lawnmower_speed[0], lawnmower_speed[1]);
     }
 }
@@ -32,6 +80,7 @@ boost::array<uint8_t, 8> makeCommandData(){
     boost::array<uint8_t, 8> data = {0};
 
     // 速度指令
+    /* 〜2020/7/6
     if(command_speed[0] == 2 && command_speed[1] == 2){ //2速前進
         data[2] = 6;
         data[1] = 6;
@@ -60,7 +109,161 @@ boost::array<uint8_t, 8> makeCommandData(){
         data[2] = 8;
         data[1] = 8;
     }
+    */
 
+    // 左クローラー
+    /*
+    switch(command_speed[0]){
+        case -5:
+        data[2] = 13;
+        break;
+        
+        case -4:
+        data[2] = 12;
+        break;
+
+        case -3:
+        data[2] = 11;
+        break;
+        
+        case -2:
+        data[2] = 10;
+        break;
+        
+        case -1:
+        data[2] = 9;
+        break;
+        
+        case 0:
+        data[2] = 8;
+        break;
+        
+        case 1:
+        data[2] = 7;
+        break;
+        
+        case 2:
+        data[2] = 6;
+        break;
+        
+        case 3:
+        data[2] = 5;
+        break;
+        
+        case 4:
+        data[2] = 4;
+        break;
+        
+        case 5:
+        data[2] = 3;
+        break;
+        
+        default:
+        ROS_WARN("Left Speed Error : %d", command_speed[0]);
+        //data[2] = 8;
+    }
+    */
+    if(command_speed[0] >= -5 && command_speed[0] <= 5){
+        data[2] = 8 - command_speed[0];
+    }
+    else{
+        ROS_WARN("Left Speed Error : %d", command_speed[0]);
+        data[2] = 8;
+    }
+
+    // 右クローラー
+    /*
+    switch(command_speed[1]){
+        case -5:
+        data[1] = 13;
+        break;
+        
+        case -4:
+        data[1] = 12;
+        break;
+
+        case -3:
+        data[1] = 11;
+        break;
+        
+        case -2:
+        data[1] = 10;
+        break;
+        
+        case -1:
+        data[1] = 9;
+        break;
+        
+        case 0:
+        data[1] = 8;
+        break;
+        
+        case 1:
+        data[1] = 7;
+        break;
+        
+        case 2:
+        data[1] = 6;
+        break;
+        
+        case 3:
+        data[1] = 5;
+        break;
+        
+        case 4:
+        data[1] = 4;
+        break;
+        
+        case 5:
+        data[1] = 3;
+        break;
+        
+        default:
+        ROS_WARN("Right Speed Error : %d", command_speed[1]);
+        //data[1] = 8;
+    }
+    */
+    if(command_speed[1] >= -5 && command_speed[1] <= 5){
+        data[1] = 8 - command_speed[1];
+    }
+    else{
+        ROS_WARN("Right Speed Error : %d", command_speed[1]);
+        data[1] = 8;
+    }
+
+    // その場旋回（後退しながら旋回が未実装のため）
+    if(command_speed[0] * command_speed[1] < 0){
+        if(command_speed[0] == 1 && command_speed[1] == -1){
+            data[2] = 7;
+            data[1] = 9;
+        }
+        else if(command_speed[0] == 3 && command_speed[1] == -3){
+            data[2] = 5;
+            data[1] = 11;
+        }
+        else if(command_speed[0] == 5 && command_speed[1] == -5){
+            data[2] = 3;
+            data[1] = 13;
+        }
+        else if(command_speed[0] == -1 && command_speed[1] == 1){
+            data[2] = 9;
+            data[1] = 7;
+        }
+        else if(command_speed[0] == -3 && command_speed[1] == 3){
+            data[2] = 11;
+            data[1] = 5;
+        }
+        else if(command_speed[0] == -5 && command_speed[1] == 5){
+            data[2] = 13;
+            data[1] = 5;
+        }
+        else{
+            ROS_WARN("Speed Error : %d %d", command_speed[0], command_speed[1]);
+            data[2] = 8;
+            data[1] = 8;
+        }
+    }
+    
     return data;
 }
 
