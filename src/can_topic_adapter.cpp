@@ -108,6 +108,21 @@ boost::array<uint8_t, 8> makeCommandData(){
 
     // その場旋回（回転優位の前進はできない）
     if(command_speed[0] * command_speed[1] < 0){
+        //int min_command_speed = std::min(abs(command_speed[0]), abs(command_speed[1]));
+        int min_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
+        if(min_command_speed % 2 == 0){
+            min_command_speed--;
+        }
+        if(command_speed[0] > 0){
+            command_speed[0] = min_command_speed;
+            command_speed[1] = min_command_speed * -1;
+        }
+        else{
+            command_speed[0] = min_command_speed * -1;
+            command_speed[1] = min_command_speed;
+        }
+        ROS_INFO("command_speed : %d %d", command_speed[0], command_speed[1]);
+
         if(command_speed[0] == 1 && command_speed[1] == -1){
             data[2] = 7;
             data[1] = 9;
@@ -130,7 +145,7 @@ boost::array<uint8_t, 8> makeCommandData(){
         }
         else if(command_speed[0] == -5 && command_speed[1] == 5){
             data[2] = 13;
-            data[1] = 5;
+            data[1] = 3;
         }
         else{
             ROS_WARN("Speed Error : %d %d", command_speed[0], command_speed[1]);

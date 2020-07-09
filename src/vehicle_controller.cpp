@@ -126,7 +126,6 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
 lawnmower::command_from_lawnmower var_command_from_lawnmower;
 void callbackCommandFromLawnmower(const lawnmower::command_from_lawnmower::ConstPtr& msg){
     var_command_from_lawnmower = *msg;
-    ROS_INFO("from : %d %d", var_command_from_lawnmower.speed_left, var_command_from_lawnmower.speed_right);
 }
 
 
@@ -149,6 +148,15 @@ int main(int argc, char** argv){
     // メインループ
     while(ros::ok()){
         pub_command_to_lawnmower.publish(makeCommandToLawnmower());
+
+        double lawnmower_speed_mps[2];
+        lawnmower_speed_mps[0] = var_command_from_lawnmower.speed_left * distance_per_rot / (2 * M_PI) / 60;
+        lawnmower_speed_mps[1] = var_command_from_lawnmower.speed_right * distance_per_rot / (2 * M_PI) / 60;
+
+        nav_msgs::Odometry odom;
+        odom.twist.twist.linear.x = (lawnmower_speed_mps[0] + lawnmower_speed_mps[1]) / 2;
+        odom.twist.twist.angular.z = (lawnmower_speed_mps[1] - lawnmower_speed_mps[0]) / 2;
+        pub_odom.publish(odom);
         
         ros::spinOnce();
 
