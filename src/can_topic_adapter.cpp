@@ -11,6 +11,7 @@ int lawnmower_engine_speed = 0; // [rpm]
 int lawnmower_speed[2] = {0}; // left rightの順 [rpm]
 
 
+// 何速で回すかを記録しておく
 void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
     ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
     command_speed[0] = msg->speed_left;
@@ -18,6 +19,8 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
     //ROS_INFO("Command speed : %d, %d", command_speed[0], command_speed[1]);
 }
 
+
+// 草刈り機からの状態出力を変換
 void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
     //ROS_INFO("SoketCAN to Topic : %d", msg->id);
     if(msg->id == 0x418){
@@ -70,99 +73,22 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
             lawnmower_speed[1] *= 1;
             break;
         }
-        lawnmower_speed[0] = lawnmower_speed[0] * 14.06 / (2 * M_PI) / 60 * 1000;
-        lawnmower_speed[1] = lawnmower_speed[1] * 14.06 / (2 * M_PI) / 60 * 1000;
         //ROS_INFO("LawnMower speed : %d, %d", lawnmower_speed[0], lawnmower_speed[1]);
+        
+        //double lawnmower_speed_left_mps = lawnmower_speed[0] * 14.06 / (2 * M_PI) / 60 / 1000;
+        //double lawnmower_speed_right_mps = lawnmower_speed[1] * 14.06 / (2 * M_PI) / 60 / 1000;
+        //ROS_INFO("LawnMower speed : %lf, %lf", lawnmower_speed_left_mps, lawnmower_speed_right_mps);
     }
 }
 
+
+// 草刈り機に送るコマンドを生成
 boost::array<uint8_t, 8> makeCommandData(){
     boost::array<uint8_t, 8> data = {0};
 
     // 速度指令
-    /* 〜2020/7/6
-    if(command_speed[0] == 2 && command_speed[1] == 2){ //2速前進
-        data[2] = 6;
-        data[1] = 6;
-    }
-    else if(command_speed[0] == 4 && command_speed[1] == 4){ //4速前進
-        data[2] = 4;
-        data[1] = 4;
-    }
-    else if(command_speed[0] == -2 && command_speed[1] == -2){ //2速後退
-        data[2] = 10;
-        data[1] = 10;
-    }
-    else if(command_speed[0] == -4 && command_speed[1] == -4){ //4速後退
-        data[2] = 12;
-        data[1] = 12;
-    }
-    else if(command_speed[0] == 4 && command_speed[1] == -4){ //その場右旋回
-        data[2] = 4;
-        data[1] = 12;
-    }
-    else if(command_speed[0] == -4 && command_speed[1] == 4){ //その場左旋回
-        data[2] = 12;
-        data[1] = 4;
-    }
-    else{ // 停止
-        data[2] = 8;
-        data[1] = 8;
-    }
-    */
 
     // 左クローラー
-    /*
-    switch(command_speed[0]){
-        case -5:
-        data[2] = 13;
-        break;
-        
-        case -4:
-        data[2] = 12;
-        break;
-
-        case -3:
-        data[2] = 11;
-        break;
-        
-        case -2:
-        data[2] = 10;
-        break;
-        
-        case -1:
-        data[2] = 9;
-        break;
-        
-        case 0:
-        data[2] = 8;
-        break;
-        
-        case 1:
-        data[2] = 7;
-        break;
-        
-        case 2:
-        data[2] = 6;
-        break;
-        
-        case 3:
-        data[2] = 5;
-        break;
-        
-        case 4:
-        data[2] = 4;
-        break;
-        
-        case 5:
-        data[2] = 3;
-        break;
-        
-        default:
-        ROS_WARN("Left Speed Error : %d", command_speed[0]);
-        //data[2] = 8;
-    }
-    */
     if(command_speed[0] >= -5 && command_speed[0] <= 5){
         data[2] = 8 - command_speed[0];
     }
@@ -172,57 +98,6 @@ boost::array<uint8_t, 8> makeCommandData(){
     }
 
     // 右クローラー
-    /*
-    switch(command_speed[1]){
-        case -5:
-        data[1] = 13;
-        break;
-        
-        case -4:
-        data[1] = 12;
-        break;
-
-        case -3:
-        data[1] = 11;
-        break;
-        
-        case -2:
-        data[1] = 10;
-        break;
-        
-        case -1:
-        data[1] = 9;
-        break;
-        
-        case 0:
-        data[1] = 8;
-        break;
-        
-        case 1:
-        data[1] = 7;
-        break;
-        
-        case 2:
-        data[1] = 6;
-        break;
-        
-        case 3:
-        data[1] = 5;
-        break;
-        
-        case 4:
-        data[1] = 4;
-        break;
-        
-        case 5:
-        data[1] = 3;
-        break;
-        
-        default:
-        ROS_WARN("Right Speed Error : %d", command_speed[1]);
-        //data[1] = 8;
-    }
-    */
     if(command_speed[1] >= -5 && command_speed[1] <= 5){
         data[1] = 8 - command_speed[1];
     }
@@ -231,7 +106,7 @@ boost::array<uint8_t, 8> makeCommandData(){
         data[1] = 8;
     }
 
-    // その場旋回（後退しながら旋回が未実装のため）
+    // その場旋回（回転優位の前進はできない）
     if(command_speed[0] * command_speed[1] < 0){
         if(command_speed[0] == 1 && command_speed[1] == -1){
             data[2] = 7;
@@ -266,6 +141,7 @@ boost::array<uint8_t, 8> makeCommandData(){
     
     return data;
 }
+
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "lawnmower_can_topic_adapter");
