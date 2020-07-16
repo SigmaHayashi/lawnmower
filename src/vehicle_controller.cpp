@@ -17,6 +17,9 @@ geometry_msgs::Twist cmd_vel;
 void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
     cmd_vel.linear = msg->linear;
     cmd_vel.angular = msg->angular;
+
+    //cmd_vel.linear.x *= 0.5;
+    //cmd_vel.angular.z *= 0.5;
 }
 
 // cmd_velからLawnMowerに送るコマンドを作る
@@ -25,8 +28,10 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
 
     //int cmd_vel_rpm = cmd_vel.linear.x * 60 / (distance_per_rot / (2 * M_PI));
     int cmd_vel_rpm[2];
-    cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / (distance_per_rot / (2 * M_PI));
-    cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / (distance_per_rot / (2 * M_PI));
+    //cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / (distance_per_rot / (2 * M_PI));
+    //cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / (distance_per_rot / (2 * M_PI));
+    cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
+    cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
     //ROS_INFO("cmd_vel_rpm : %d %d %d", cmd_vel_rpm, cmd_vel_rpm_left, cmd_vel_rpm_right);
     ROS_INFO("cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
 
@@ -150,12 +155,14 @@ int main(int argc, char** argv){
         pub_command_to_lawnmower.publish(makeCommandToLawnmower());
 
         double lawnmower_speed_mps[2];
-        lawnmower_speed_mps[0] = var_command_from_lawnmower.speed_left * distance_per_rot / (2 * M_PI) / 60;
-        lawnmower_speed_mps[1] = var_command_from_lawnmower.speed_right * distance_per_rot / (2 * M_PI) / 60;
+        //lawnmower_speed_mps[0] = var_command_from_lawnmower.speed_left * distance_per_rot / (2 * M_PI) / 60;
+        //lawnmower_speed_mps[1] = var_command_from_lawnmower.speed_right * distance_per_rot / (2 * M_PI) / 60;
+        lawnmower_speed_mps[0] = var_command_from_lawnmower.speed_left * distance_per_rot / 60;
+        lawnmower_speed_mps[1] = var_command_from_lawnmower.speed_right * distance_per_rot / 60;
 
         nav_msgs::Odometry odom;
         odom.twist.twist.linear.x = (lawnmower_speed_mps[0] + lawnmower_speed_mps[1]) / 2;
-        odom.twist.twist.angular.z = (lawnmower_speed_mps[1] - lawnmower_speed_mps[0]) / 2;
+        odom.twist.twist.angular.z = (lawnmower_speed_mps[1] - lawnmower_speed_mps[0]) / distance_wheel;
         pub_odom.publish(odom);
         
         ros::spinOnce();
