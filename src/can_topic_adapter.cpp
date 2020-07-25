@@ -7,16 +7,51 @@
 int command_speed[2] = {0}; // left rightの順
 
 // LawnMowerから送られてくる情報
-int lawnmower_engine_speed = 0; // [rpm]
-int lawnmower_speed[2] = {0}; // left rightの順 [rpm]
+int lawnmower_engine_speed = 0; // [rot/min]
+int lawnmower_speed[2] = {0}; // left rightの順 [rot/min]
+
+// 正回転・逆回転を切り替えるときに使うやつ
+int rot_direction_balancer[2] = {0};
+const int rot_direction_balancer_max = 2;
 
 
 // 何速で回すかを記録しておく
 void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
     ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
-    command_speed[0] = msg->speed_left;
-    command_speed[1] = msg->speed_right;
-    //ROS_INFO("Command speed : %d, %d", command_speed[0], command_speed[1]);
+
+    //command_speed[0] = msg->speed_left;
+    //command_speed[1] = msg->speed_right;
+    
+    // 正回転・逆回転を急に切り替えないようにする対応
+    // 左クローラー
+    if(command_speed[0] * msg->speed_left < 0 || rot_direction_balancer[0] > 0){
+        command_speed[0] = 0;
+        rot_direction_balancer[0]++;
+
+        if(rot_direction_balancer[0] >= rot_direction_balancer_max){
+            rot_direction_balancer[0] = 0;
+            //ROS_WARN("HERE %d", rot_direction_balancer[0]);
+        }
+    }
+    else{
+        command_speed[0] = msg->speed_left;
+    }
+        
+    // 右クローラー
+    if(command_speed[1] * msg->speed_right < 0 || rot_direction_balancer[1] > 0){
+        command_speed[1] = 0;
+        rot_direction_balancer[1]++;
+
+        if(rot_direction_balancer[1] >= rot_direction_balancer_max){
+            rot_direction_balancer[1] = 0;
+        }
+    }
+    else{
+        command_speed[1] = msg->speed_right;
+    }
+
+    ROS_INFO("Final Command speed : %d, %d", command_speed[0], command_speed[1]);
+    ROS_INFO("Balancer : %d, %d", rot_direction_balancer[0], rot_direction_balancer[1]);
 }
 
 
@@ -109,19 +144,19 @@ boost::array<uint8_t, 8> makeCommandData(){
     // その場旋回（回転優位の前進はできない）
     if(command_speed[0] * command_speed[1] < 0){
         //int min_command_speed = std::min(abs(command_speed[0]), abs(command_speed[1]));
-        int min_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
-        if(min_command_speed % 2 == 0){
-            min_command_speed--;
+        int ave_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
+        if(ave_command_speed % 2 == 0){
+            ave_command_speed--;
         }
         if(command_speed[0] > 0){
-            command_speed[0] = min_command_speed;
-            command_speed[1] = min_command_speed * -1;
+            command_speed[0] = ave_command_speed;
+            command_speed[1] = ave_command_speed * -1;
         }
         else{
-            command_speed[0] = min_command_speed * -1;
-            command_speed[1] = min_command_speed;
+            command_speed[0] = ave_command_speed * -1;
+            command_speed[1] = ave_command_speed;
         }
-        ROS_INFO("command_speed : %d %d", command_speed[0], command_speed[1]);
+        //ROS_INFO("command_speed : %d, %d", command_speed[0], command_speed[1]);
 
         if(command_speed[0] == 1 && command_speed[1] == -1){
             data[2] = 7;
@@ -153,7 +188,8 @@ boost::array<uint8_t, 8> makeCommandData(){
             data[1] = 8;
         }
     }
-    
+
+    //ROS_INFO("command_speed : %d, %d", command_speed[0], command_speed[1]);
     return data;
 }
 
