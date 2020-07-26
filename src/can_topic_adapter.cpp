@@ -50,6 +50,23 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
         command_speed[1] = msg->speed_right;
     }
 
+    // その場旋回についての対応（回転優位の前進・後退はできない）
+    if(command_speed[0] * command_speed[1] < 0){
+        //int min_command_speed = std::min(abs(command_speed[0]), abs(command_speed[1]));
+        int ave_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
+        if(ave_command_speed % 2 == 0){
+            ave_command_speed--;
+        }
+        if(command_speed[0] > 0){
+            command_speed[0] = ave_command_speed;
+            command_speed[1] = ave_command_speed * -1;
+        }
+        else{
+            command_speed[0] = ave_command_speed * -1;
+            command_speed[1] = ave_command_speed;
+        }
+    }
+
     ROS_INFO("Final Command speed : %d, %d", command_speed[0], command_speed[1]);
     ROS_INFO("Balancer : %d, %d", rot_direction_balancer[0], rot_direction_balancer[1]);
 }
@@ -109,10 +126,6 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
             break;
         }
         //ROS_INFO("LawnMower speed : %d, %d", lawnmower_speed[0], lawnmower_speed[1]);
-        
-        //double lawnmower_speed_left_mps = lawnmower_speed[0] * 14.06 / (2 * M_PI) / 60 / 1000;
-        //double lawnmower_speed_right_mps = lawnmower_speed[1] * 14.06 / (2 * M_PI) / 60 / 1000;
-        //ROS_INFO("LawnMower speed : %lf, %lf", lawnmower_speed_left_mps, lawnmower_speed_right_mps);
     }
 }
 
@@ -142,6 +155,7 @@ boost::array<uint8_t, 8> makeCommandData(){
     }
 
     // その場旋回（回転優位の前進はできない）
+    /*
     if(command_speed[0] * command_speed[1] < 0){
         //int min_command_speed = std::min(abs(command_speed[0]), abs(command_speed[1]));
         int ave_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
@@ -188,6 +202,7 @@ boost::array<uint8_t, 8> makeCommandData(){
             data[1] = 8;
         }
     }
+    */
 
     //ROS_INFO("command_speed : %d, %d", command_speed[0], command_speed[1]);
     return data;
