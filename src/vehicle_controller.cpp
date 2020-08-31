@@ -10,7 +10,7 @@
 #include "lawnmower/command_from_lawnmower.h"
 
 const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
-const double distance_wheel = 1.0;            // 左右輪の距離[m]
+const double distance_wheel = 0.75;            // 左右輪の距離[m]
 
 // cmd_velに対するコールバック
 geometry_msgs::Twist cmd_vel;
