@@ -157,6 +157,9 @@ target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
 add_executable(vehicle_controller src/vehicle_controller.cpp)
 target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
 
+add_executable(virtual_vehicle_controller src/virtual_vehicle_controller.cpp)
+target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##
