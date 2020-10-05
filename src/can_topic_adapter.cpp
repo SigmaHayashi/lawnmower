@@ -54,9 +54,12 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
     if(command_speed[0] * command_speed[1] < 0){
         //int min_command_speed = std::min(abs(command_speed[0]), abs(command_speed[1]));
         int ave_command_speed = (abs(command_speed[0]) + abs(command_speed[1])) / 2;
+        /*
+        // 2速4速のその場旋回はできない
         if(ave_command_speed % 2 == 0){
             ave_command_speed--;
         }
+        */
         if(command_speed[0] > 0){
             command_speed[0] = ave_command_speed;
             command_speed[1] = ave_command_speed * -1;

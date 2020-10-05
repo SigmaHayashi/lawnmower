@@ -166,6 +166,7 @@ int main(int argc, char** argv){
 
     // メインループ
     while(ros::ok()){
+        odom.header.stamp = ros::Time::now();
         pub_odom.publish(odom); // odoomをパブリッシュ
         
         ros::spinOnce();

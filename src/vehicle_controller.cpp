@@ -155,6 +155,7 @@ int main(int argc, char** argv){
         lawnmower_speed_mps[1] = var_command_from_lawnmower.speed_right * distance_per_rot / 60;
 
         nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
         odom.twist.twist.linear.x = (lawnmower_speed_mps[0] + lawnmower_speed_mps[1]) / 2;
         odom.twist.twist.angular.z = (lawnmower_speed_mps[1] - lawnmower_speed_mps[0]) / distance_wheel;
         pub_odom.publish(odom);
