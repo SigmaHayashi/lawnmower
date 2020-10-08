@@ -167,11 +167,11 @@ int main(int argc, char** argv){
 
     ros::NodeHandle nh;
 
-    ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 1, callbackCaommandToLawnmower);
-    ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 1);
+    ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 10, callbackCaommandToLawnmower);
+    ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);
 
-    ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 1, callbackSocketcanToTopic);
-    ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 1);
+    ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 10, callbackSocketcanToTopic);
+    ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 10);
 
     ROS_INFO("Start CAN Topic Adapter");
 

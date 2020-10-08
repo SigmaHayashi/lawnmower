@@ -138,10 +138,10 @@ int main(int argc, char** argv){
 
     ROS_INFO("Vehicle Controller Start");
 
-    ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 1, callbackCmdVel);
-    ros::Publisher pub_command_to_lawnmower = nh.advertise<lawnmower::command_to_lawnmower>("command_to_lawnmower", 1);
+    ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 10, callbackCmdVel);
+    ros::Publisher pub_command_to_lawnmower = nh.advertise<lawnmower::command_to_lawnmower>("command_to_lawnmower", 10);
 
-    ros::Subscriber sub_command_from_lawnmofer = nh.subscribe("command_from_lawnmower", 1, callbackCommandFromLawnmower);
+    ros::Subscriber sub_command_from_lawnmofer = nh.subscribe("command_from_lawnmower", 10, callbackCommandFromLawnmower);
     ros::Publisher pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 100);
 
     ros::Rate loop_rate(20);
