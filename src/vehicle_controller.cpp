@@ -44,7 +44,8 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[0] >= (673 + 268) / 2){
             msg.speed_left = 2;
         }
-        else if(cmd_vel_rpm[0] >= 268 / 2){
+        //else if(cmd_vel_rpm[0] >= 268 / 2){
+        else if(cmd_vel_rpm[0] > 0){
             msg.speed_left = 1;
         }
         else{
@@ -64,7 +65,8 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[0] <= (673 + 268) / -2){
             msg.speed_left = -2;
         }
-        else if(cmd_vel_rpm[0] <= 268 / -2){
+        //else if(cmd_vel_rpm[0] <= 268 / -2){
+        else if(cmd_vel_rpm[0] < 0){
             msg.speed_left = -1;
         }
         else{
@@ -88,7 +90,8 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[1] >= (673 + 268) / 2){
             msg.speed_right = 2;
         }
-        else if(cmd_vel_rpm[1] >= 268 / 2){
+        //else if(cmd_vel_rpm[1] >= 268 / 2){
+        else if(cmd_vel_rpm[1] > 0){
             msg.speed_right = 1;
         }
         else{
@@ -108,7 +111,8 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[1] <= (673 + 268) / -2){
             msg.speed_right = -2;
         }
-        else if(cmd_vel_rpm[1] <= 268 / -2){
+        //else if(cmd_vel_rpm[1] <= 268 / -2){
+        else if(cmd_vel_rpm[1] < 0){
             msg.speed_right = -1;
         }
         else{
@@ -158,6 +162,7 @@ int main(int argc, char** argv){
         odom.header.stamp = ros::Time::now();
         odom.twist.twist.linear.x = (lawnmower_speed_mps[0] + lawnmower_speed_mps[1]) / 2;
         odom.twist.twist.angular.z = (lawnmower_speed_mps[1] - lawnmower_speed_mps[0]) / distance_wheel;
+        odom.twist.twist.angular.z *= 0.8;
         pub_odom.publish(odom);
         
         ros::spinOnce();
