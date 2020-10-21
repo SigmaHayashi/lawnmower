@@ -29,6 +29,7 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
     int cmd_vel_rpm[2];
     cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
     cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
+    ROS_INFO("cmd_vel     : %.4f %.4f", cmd_vel.linear.x, cmd_vel.angular.z);
     ROS_INFO("cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
 
     if(cmd_vel_rpm[0] > 0){

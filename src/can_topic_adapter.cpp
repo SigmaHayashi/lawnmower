@@ -14,6 +14,12 @@ int lawnmower_speed[2] = {0}; // left rightの順 [rot/min]
 int rot_direction_balancer[2] = {0};
 const int rot_direction_balancer_max = 2;
 
+// モーターの回転方向を正しく制御できていないときに使う
+int crawler_control_error_count = {0};
+const int crawler_control_error_max = 20;
+int crawler_control_error_fix_count = 0;
+const int crawler_control_error_fix_max = 2;
+
 
 // 何速で回すかを記録しておく
 void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
@@ -22,7 +28,7 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
     //command_speed[0] = msg->speed_left;
     //command_speed[1] = msg->speed_right;
     
-    // 正回転・逆回転を急に切り替えないようにする対応
+    // 正回転・逆回転を急に切り替えないようにする対応 (一度0を送る)
     // 左クローラー
     if(command_speed[0] * msg->speed_left < 0 || rot_direction_balancer[0] > 0){
         command_speed[0] = 0;
@@ -70,8 +76,8 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
         }
     }
 
-    ROS_INFO("Final Command speed : %d, %d", command_speed[0], command_speed[1]);
-    ROS_INFO("Balancer : %d, %d", rot_direction_balancer[0], rot_direction_balancer[1]);
+    //ROS_INFO("Final Command speed : %d, %d", command_speed[0], command_speed[1]);
+    //ROS_INFO("Balancer : %d, %d", rot_direction_balancer[0], rot_direction_balancer[1]);
 }
 
 
@@ -84,46 +90,109 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
         lawnmower_speed[1] = (msg->data[2] << 8) | msg->data[1];
         switch(msg->data[7]){
             case 0:
+            if(lawnmower_speed[0] != 0 || lawnmower_speed[1] != 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 0;
             lawnmower_speed[1] *= 0;
             break;
 
             case 1:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] != 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 1;
             lawnmower_speed[1] *= 0;
             break;
             
             case 2:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] != 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= -1;
             lawnmower_speed[1] *= 0;
             break;
             
             case 3:
+            if(lawnmower_speed[0] != 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 0;
             lawnmower_speed[1] *= -1;
             break;
             
             case 4:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 1;
             lawnmower_speed[1] *= -1;
             break;
             
             case 5:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= -1;
             lawnmower_speed[1] *= -1;
             break;
             
             case 6:
+            if(lawnmower_speed[0] != 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 0;
             lawnmower_speed[1] *= 1;
             break;
             
             case 7:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= 1;
             lawnmower_speed[1] *= 1;
             break;
             
             case 8:
+            if(lawnmower_speed[0] == 0 || lawnmower_speed[1] == 0){
+                crawler_control_error_count ++;
+            }
+            else{
+                crawler_control_error_count = 0;
+                crawler_control_error_fix_count = 0;
+            }
             lawnmower_speed[0] *= -1;
             lawnmower_speed[1] *= 1;
             break;
@@ -138,6 +207,18 @@ boost::array<uint8_t, 8> makeCommandData(){
     boost::array<uint8_t, 8> data = {0};
 
     // 速度指令
+
+    // クローラーが正しく制御できていない場合、一度停止
+    if(crawler_control_error_count >= crawler_control_error_max){
+        crawler_control_error_fix_count ++;
+        if(crawler_control_error_fix_count >= crawler_control_error_fix_max){
+            crawler_control_error_count = 0;
+            crawler_control_error_fix_count = 0;
+        }
+        command_speed[0] = command_speed[1] = 0;
+    }
+    ROS_INFO("Crawler Control Error: %d", crawler_control_error_count);
+    ROS_INFO("Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
 
     // 左クローラー
     if(command_speed[0] >= -5 && command_speed[0] <= 5){
