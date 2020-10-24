@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -52,6 +53,11 @@ add_message_files(
   FILES
   command_to_lawnmower.msg
   command_from_lawnmower.msg
+  nav_manager_command.msg
+  nav_manager_status.msg
+  auto.msg
+  status.msg
+  latlon.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -72,6 +78,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
