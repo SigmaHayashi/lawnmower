@@ -3,7 +3,7 @@
 
 import rospy
 
-from lawnmower.msg import status, auto, nav_manager_command, nav_manager_status
+from lawnmower.msg import status, autostart, nav_manager_command, nav_manager_status
 from std_msgs.msg import String, Empty
 from sensor_msgs.msg import NavSatFix
 
@@ -31,23 +31,20 @@ class CloudAdapter():
 
         self.wgs84 = pyproj.Proj(init='EPSG:4326')
         self.rect6 = pyproj.Proj(init='EPSG:2444')
-        #self.origin_lat = rospy.get_param('~origin_lat', 33.59554271426774)
-        #self.origin_lng = rospy.get_param('~origin_lng', 130.21900769548205)
-        #self.angle_offset = rospy.get_param('~angle_offset', 42.84752885475223)
-        #self.scale_offset = rospy.get_param('~scale_offset', 1.0002455054972383)
-        self.origin_lat = rospy.get_param('/latlng2pos/origin_lat', 0.0)
-        self.origin_lng = rospy.get_param('/latlng2pos/origin_lng', 0.0)
-        self.angle_offset = rospy.get_param('/latlng2pos/angle_offset', 0.0) * math.pi / 180.0
-        self.scale_offset = rospy.get_param('/latlng2pos/scale_offset', 1.0)
+        self.origin_lat = rospy.get_param('~origin_lat', 33.0)
+        self.origin_lng = rospy.get_param('~origin_lng', 130.0)
+        self.angle_offset = math.radians(rospy.get_param('~angle_offset', 0.0))
+        self.scale_offset = rospy.get_param('~scale_offset', 1.0)
+        self.gnss_fix_value = rospy.get_param('~fix_value', 1)
+        self.gnss_float_value = rospy.get_param('~float_value', 0)
 
+        self.pub_status = rospy.Publisher(rospy.get_param('~pub_topic_status', 'status'), status, queue_size=10)
 
-        self.pub_status = rospy.Publisher('/orec/status', status, queue_size=10)
-
-        rospy.Subscriber('/orec/auto_start', auto, self.callback_auto_start, queue_size=1)
-        rospy.Subscriber('/orec/auto_stop', Empty, self.callback_auto_stop, queue_size=1)
-        rospy.Subscriber('/orec/speed', String, self.callback_speed, queue_size=1)
-        rospy.Subscriber('/orec/grass_start', Empty, self.callback_grass_start, queue_size=1)
-        rospy.Subscriber('/orec/grass_stop', Empty, self.callback_grass_stop, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_auto_start', 'auto_start'), autostart, self.callback_auto_start, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_auto_stop', 'auto_stop'), Empty, self.callback_auto_stop, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_speed', 'speed'), String, self.callback_speed, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_grass_start', 'grass_start'), Empty, self.callback_grass_start, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_grass_stop', 'grass_stop'), Empty, self.callback_grass_stop, queue_size=1)
 
         self.pub_nav_manager_command = rospy.Publisher('/nav_manager/command', nav_manager_command, queue_size=10)
 
@@ -106,12 +103,12 @@ class CloudAdapter():
 
     def callback_fix(self, data):
         #rospy.loginfo('fix')
-        # fix   : 3 -> 0
-        # float : 2 -> 1
-        # other : 1 -> 2
-        if data.status.status == 3:
+        # fix   : 0
+        # float : 1
+        # other : 2
+        if data.status.status == self.gnss_fix_value:
             self.status_msg.sat_status = 0
-        elif data.status.status == 2:
+        elif data.status.status == self.gnss_float_value:
             self.status_msg.sat_status = 1
         else:
             self.status_msg.sat_status = 2
@@ -138,6 +135,7 @@ class CloudAdapter():
     def publish_status(self):
         #rospy.loginfo('Publish Status')
 
+        '''
         msg = status()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.status_msg.header.frame_id
@@ -150,8 +148,9 @@ class CloudAdapter():
         msg.auto_status =self.status_msg.auto_status
         msg.speed_status = self.status_msg.speed_status
         msg.grass_status = self.status_msg.grass_status
-        
-        self.pub_status.publish(msg)
+        '''
+        self.status_msg.header.stamp = rospy.Time.now()
+        self.pub_status.publish(self.status_msg)
 
 
 if __name__ == "__main__":
