@@ -53,8 +53,8 @@ add_message_files(
   FILES
   command_to_lawnmower.msg
   command_from_lawnmower.msg
-  nav_manager_command.msg
-  nav_manager_status.msg
+  #nav_manager_command.msg
+  #nav_manager_status.msg
   autostart.msg
   status.msg
   latlon.msg
