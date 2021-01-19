@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 
 uint8 seq_num
 string cmd_name

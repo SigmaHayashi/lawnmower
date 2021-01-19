@@ -1,3 +1,4 @@
+/*
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/TwistStamped.h"
@@ -8,6 +9,15 @@
 
 #include "lawnmower/command_to_lawnmower.h"
 #include "lawnmower/command_from_lawnmower.h"
+*/
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+
+#include "lawnmower/msg/command_to_lawnmower.hpp"
+#include "lawnmower/msg/command_from_lawnmower.hpp"
+
+rclcpp::Node::SharedPtr node = nullptr;
 
 const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
 const double distance_wheel = 0.75;            // 左右輪の距離[m]
@@ -15,16 +25,20 @@ const double distance_wheel = 0.75;            // 左右輪の距離[m]
 
 // cmd_vel -> command_to_lawnmower -> command_from_lawnmower -> odom
 // の過程をすっ飛ばす
-nav_msgs::Odometry odom;
-void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
-    geometry_msgs::Twist cmd_vel;
+//nav_msgs::Odometry odom;
+nav_msgs::msg::Odometry odom;
+//void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
+void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
+    //geometry_msgs::Twist cmd_vel;
+    geometry_msgs::msg::Twist cmd_vel;
     cmd_vel.linear = msg->linear;
     cmd_vel.angular = msg->angular;
 
     int cmd_vel_rpm[2];
     cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
     cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
-    ROS_INFO("cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
+    //ROS_INFO("cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
+    RCLCPP_INFO(node->get_logger(), "cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
 
     int speed_left_simple = 0;
     int speed_right_simple = 0;
@@ -174,7 +188,8 @@ void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
         speed_right = 0;
     }
 
-    ROS_INFO("Command Speed: %d, %d", speed_left_simple, speed_right_simple);
+    //ROS_INFO("Command Speed: %d, %d", speed_left_simple, speed_right_simple);
+    RCLCPP_INFO(node->get_logger(), "Command Speed: %d, %d", speed_left_simple, speed_right_simple);
 
     double speed_left_mps = speed_left * distance_per_rot / 60;
     double speed_right_mps = speed_right * distance_per_rot / 60;
@@ -188,23 +203,33 @@ void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
 // メイン関数
 int main(int argc, char** argv){
 
-    ros::init(argc, argv, "virtual_vehicle_controller");
-    ros::NodeHandle nh;
+    //ros::init(argc, argv, "virtual_vehicle_controller");
+    //ros::NodeHandle nh;
+    rclcpp::init(argc, argv);
+    node = rclcpp::Node::make_shared("virtual_vehicle_controller");
 
-    ROS_INFO("Virtual Vehicle Controller Start");
+    //ROS_INFO("Virtual Vehicle Controller Start");
+    RCLCPP_INFO(node->get_logger(), "Virtual Vehicle Controller Start");
 
-    ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 1, callbackCmdVel);
+    //ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 1, callbackCmdVel);
+    auto sub_cmd_vel = node->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 1, callbackCmdVel);
 
-    ros::Publisher pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 100);
+    //ros::Publisher pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 100);
+    auto pub_odom = node->create_publisher<nav_msgs::msg::Odometry>("odom", 100);
 
-    ros::Rate loop_rate(20);
+    //ros::Rate loop_rate(20);
+    rclcpp::Rate loop_rate(20);
 
     // メインループ
-    while(ros::ok()){
-        odom.header.stamp = ros::Time::now();
-        pub_odom.publish(odom); // odoomをパブリッシュ
+    //while(ros::ok()){
+    while(rclcpp::ok()){
+        //odom.header.stamp = ros::Time::now();
+        odom.header.stamp = node->get_clock()->now();
+        //pub_odom.publish(odom); // odoomをパブリッシュ
+        pub_odom->publish(odom); // odoomをパブリッシュ
         
-        ros::spinOnce();
+        //ros::spinOnce();
+        rclcpp::spin_some(node);
 
         loop_rate.sleep();
     }

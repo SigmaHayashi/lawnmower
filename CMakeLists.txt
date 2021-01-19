@@ -1,19 +1,40 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(lawnmower)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
-  geometry_msgs
-  message_generation
-)
+#find_package(catkin REQUIRED COMPONENTS
+#  roscpp
+#  rospy
+#  std_msgs
+#  geometry_msgs
+#  message_generation
+#)
+
+find_package(ament_cmake REQUIRED)
+#find_package(roscpp REQUIRED)
+find_package(rclcpp REQUIRED)
+#find_package(rospy REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+#find_package(message_generation REQUIRED)
+find_package(lawnmower REQUIRED)
+find_package(can_msgs REQUIRED)
+
+find_package(rosidl_default_generators REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -49,16 +70,16 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  command_to_lawnmower.msg
-  command_from_lawnmower.msg
-  #nav_manager_command.msg
-  #nav_manager_status.msg
-  autostart.msg
-  status.msg
-  latlon.msg
-)
+#add_message_files(
+#  FILES
+#  command_to_lawnmower.msg
+#  command_from_lawnmower.msg
+#  #nav_manager_command.msg
+#  #nav_manager_status.msg
+#  autostart.msg
+#  status.msg
+#  latlon.msg
+#)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -75,10 +96,19 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
+#generate_messages(
+#  DEPENDENCIES
+#  std_msgs
+#  geometry_msgs
+#)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/CommandToLawnmower.msg"
+  "msg/CommandFromLawnmower.msg"
+  "msg/Autostart.msg"
+  "msg/Status.msg"
+  "msg/Latlon.msg"
+  DEPENDENCIES std_msgs geometry_msgs
 )
 
 ################################################
@@ -110,12 +140,12 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES lawnmower
-   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
-#  DEPENDS system_lib
-)
+#catkin_package(
+##  INCLUDE_DIRS include
+##  LIBRARIES lawnmower
+#   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+##  DEPENDS system_lib
+#)
 
 ###########
 ## Build ##
@@ -123,10 +153,11 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+#include_directories(
+#  include
+#  ${catkin_INCLUDE_DIRS}
+#)
+include_directories(include)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -159,13 +190,16 @@ include_directories(
 # )
 
 add_executable(can_topic_adapter src/can_topic_adapter.cpp)
-target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
+#target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
+ament_target_dependencies(can_topic_adapter rclcpp std_msgs lawnmower can_msgs)
 
 add_executable(vehicle_controller src/vehicle_controller.cpp)
-target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
+#target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
+ament_target_dependencies(vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
 
 add_executable(virtual_vehicle_controller src/virtual_vehicle_controller.cpp)
-target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
+#target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
+ament_target_dependencies(virtual_vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
 
 
 #############
@@ -210,6 +244,13 @@ target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+install(TARGETS
+  can_topic_adapter
+  vehicle_controller
+  virtual_vehicle_controller
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 #############
 ## Testing ##
 #############
@@ -222,3 +263,5 @@ target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+ament_package()

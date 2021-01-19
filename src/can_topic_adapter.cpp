@@ -1,7 +1,15 @@
+/*
 #include "ros/ros.h"
 #include "lawnmower/command_to_lawnmower.h"
 #include "lawnmower/command_from_lawnmower.h"
 #include "can_msgs/Frame.h"
+*/
+#include "rclcpp/rclcpp.hpp"
+#include "lawnmower/msg/command_to_lawnmower.hpp"
+#include "lawnmower/msg/command_from_lawnmower.hpp"
+#include "can_msgs/msg/frame.hpp"
+
+rclcpp::Node::SharedPtr node = nullptr;
 
 // LawnMowerに送るコマンド
 int command_speed[2] = {0}; // left rightの順
@@ -22,8 +30,10 @@ const int crawler_control_error_fix_max = 2;
 
 
 // 何速で回すかを記録しておく
-void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
-    ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
+//void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
+void callbackCaommandToLawnmower(const lawnmower::msg::CommandToLawnmower::SharedPtr msg){
+    //ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
+    RCLCPP_INFO(node->get_logger(), "Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
 
     //command_speed[0] = msg->speed_left;
     //command_speed[1] = msg->speed_right;
@@ -82,7 +92,8 @@ void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr
 
 
 // 草刈り機からの状態出力を変換
-void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
+//void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
+void callbackSocketcanToTopic(const can_msgs::msg::Frame::SharedPtr msg){
     //ROS_INFO("SoketCAN to Topic : %d", msg->id);
     if(msg->id == 0x418){
         lawnmower_engine_speed = msg->data[0];
@@ -203,8 +214,10 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
 
 
 // 草刈り機に送るコマンドを生成
-boost::array<uint8_t, 8> makeCommandData(){
-    boost::array<uint8_t, 8> data = {0};
+//boost::array<uint8_t, 8> makeCommandData(){
+std::array<uint8_t, 8> makeCommandData(){
+    //boost::array<uint8_t, 8> data = {0};
+    std::array<uint8_t, 8> data = {0};
 
     // 速度指令
 
@@ -217,15 +230,17 @@ boost::array<uint8_t, 8> makeCommandData(){
         }
         command_speed[0] = command_speed[1] = 0;
     }
-    ROS_INFO("Crawler Control Error: %d", crawler_control_error_count);
-    ROS_INFO("Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
+    //ROS_INFO("Crawler Control Error: %d", crawler_control_error_count);
+    //ROS_INFO("Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
+    RCLCPP_INFO(node->get_logger(), "Crawler Control Error: %d", crawler_control_error_count);
+    RCLCPP_INFO(node->get_logger(), "Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
 
     // 左クローラー
     if(command_speed[0] >= -5 && command_speed[0] <= 5){
         data[2] = 8 - command_speed[0];
     }
     else{
-        ROS_WARN("Left Speed Error : %d", command_speed[0]);
+        //ROS_WARN("Left Speed Error : %d", command_speed[0]);
         data[2] = 8;
     }
 
@@ -234,7 +249,7 @@ boost::array<uint8_t, 8> makeCommandData(){
         data[1] = 8 - command_speed[1];
     }
     else{
-        ROS_WARN("Right Speed Error : %d", command_speed[1]);
+        //ROS_WARN("Right Speed Error : %d", command_speed[1]);
         data[1] = 8;
     }
 
@@ -244,36 +259,51 @@ boost::array<uint8_t, 8> makeCommandData(){
 
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "lawnmower_can_topic_adapter");
+    //ros::init(argc, argv, "lawnmower_can_topic_adapter");
 
-    ros::NodeHandle nh;
+    //ros::NodeHandle nh;
 
-    ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 10, callbackCaommandToLawnmower);
-    ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);
+    rclcpp::init(argc, argv);
+    node = rclcpp::Node::make_shared("lawnmower_can_topic_adapter");
 
-    ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 10, callbackSocketcanToTopic);
-    ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 10);
+    //ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 10, callbackCaommandToLawnmower);
+    //ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);
+    auto sub_command_to_lawnmower = node->create_subscription<lawnmower::msg::CommandToLawnmower>("command_to_lawnmower", 10, callbackCaommandToLawnmower);
+    auto pub_topic_to_socketcan = node->create_publisher<can_msgs::msg::Frame>("sent_messages", 10);
 
-    ROS_INFO("Start CAN Topic Adapter");
+    //ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 10, callbackSocketcanToTopic);
+    //ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 10);
+    auto sub_socketcan_to_topic = node->create_subscription<can_msgs::msg::Frame>("received_messages", 10, callbackSocketcanToTopic);
+    auto pub_command_from_lawnmower = node->create_publisher<lawnmower::msg::CommandFromLawnmower>("command_from_lawnmower", 10);
 
-    ros::Rate loop_rate(20);
+    //ROS_INFO("Start CAN Topic Adapter");
+    RCLCPP_INFO(node->get_logger(), "Start CAN Topic Adapter");
 
-    while(ros::ok()){
+    //ros::Rate loop_rate(20);
+    rclcpp::Rate loop_rate(20);
 
-        can_msgs::Frame msg_topic_to_socketcan;
+    //while(ros::ok()){
+    while(rclcpp::ok()){
+
+        //can_msgs::Frame msg_topic_to_socketcan;
+        can_msgs::msg::Frame msg_topic_to_socketcan;
         msg_topic_to_socketcan.id = 0x410;
         msg_topic_to_socketcan.dlc = 8;
         //msg_topic_to_socketcan.data = msg_data;
         msg_topic_to_socketcan.data = makeCommandData();
-        pub_topic_to_socketcan.publish(msg_topic_to_socketcan);
+        //pub_topic_to_socketcan.publish(msg_topic_to_socketcan);
+        pub_topic_to_socketcan->publish(msg_topic_to_socketcan);
 
-        lawnmower::command_from_lawnmower msg_command_from_lawnmower;
+        //lawnmower::command_from_lawnmower msg_command_from_lawnmower;
+        lawnmower::msg::CommandFromLawnmower msg_command_from_lawnmower;
         msg_command_from_lawnmower.engine_speed = lawnmower_engine_speed;
         msg_command_from_lawnmower.speed_left = lawnmower_speed[0];
         msg_command_from_lawnmower.speed_right = lawnmower_speed[1];
-        pub_command_from_lawnmower.publish(msg_command_from_lawnmower);
+        //pub_command_from_lawnmower.publish(msg_command_from_lawnmower);
+        pub_command_from_lawnmower->publish(msg_command_from_lawnmower);
 
-        ros::spinOnce();
+        //ros::spinOnce();
+        rclcpp::spin_some(node);
 
         loop_rate.sleep();
     }
