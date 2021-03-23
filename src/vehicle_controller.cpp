@@ -6,8 +6,8 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include "lawnmower/command_to_lawnmower.h"
-#include "lawnmower/command_from_lawnmower.h"
+#include "lawnmower/CommandToLawnmower.h"
+#include "lawnmower/CommandFromLawnmower.h"
 
 const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
 const double distance_wheel = 0.75;            // 左右輪の距離[m]
@@ -23,8 +23,8 @@ void callbackCmdVel(const geometry_msgs::Twist::ConstPtr& msg){
 }
 
 // cmd_velからLawnMowerに送るコマンドを作る
-lawnmower::command_to_lawnmower makeCommandToLawnmower(){
-    lawnmower::command_to_lawnmower msg; // [m/sec] [rad/min]
+lawnmower::CommandToLawnmower makeCommandToLawnmower(){
+    lawnmower::CommandToLawnmower msg; // [m/sec] [rad/min]
 
     int cmd_vel_rpm[2];
     cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
@@ -129,8 +129,8 @@ lawnmower::command_to_lawnmower makeCommandToLawnmower(){
 
 
 // 草刈り機の状態を記録しておく
-lawnmower::command_from_lawnmower var_command_from_lawnmower;
-void callbackCommandFromLawnmower(const lawnmower::command_from_lawnmower::ConstPtr& msg){
+lawnmower::CommandFromLawnmower var_command_from_lawnmower;
+void callbackCommandFromLawnmower(const lawnmower::CommandFromLawnmower::ConstPtr& msg){
     var_command_from_lawnmower = *msg;
 }
 
@@ -144,7 +144,7 @@ int main(int argc, char** argv){
     ROS_INFO("Vehicle Controller Start");
 
     ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 10, callbackCmdVel);
-    ros::Publisher pub_command_to_lawnmower = nh.advertise<lawnmower::command_to_lawnmower>("command_to_lawnmower", 10);
+    ros::Publisher pub_command_to_lawnmower = nh.advertise<lawnmower::CommandToLawnmower>("command_to_lawnmower", 10);
 
     ros::Subscriber sub_command_from_lawnmofer = nh.subscribe("command_from_lawnmower", 10, callbackCommandFromLawnmower);
     ros::Publisher pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 100);

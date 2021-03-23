@@ -6,8 +6,8 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include "lawnmower/command_to_lawnmower.h"
-#include "lawnmower/command_from_lawnmower.h"
+//#include "lawnmower/CommandToLawnmower.h"
+//#include "lawnmower/CommandFromLawnmower.h"
 
 const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
 const double distance_wheel = 0.75;            // 左右輪の距離[m]

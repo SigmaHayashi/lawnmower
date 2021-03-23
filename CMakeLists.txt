@@ -51,13 +51,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  command_to_lawnmower.msg
-  command_from_lawnmower.msg
+  CommandToLawnmower.msg
+  CommandFromLawnmower.msg
   #nav_manager_command.msg
   #nav_manager_status.msg
-  autostart.msg
-  status.msg
-  latlon.msg
+  Autostart.msg
+  Status.msg
+  Latlon.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -159,12 +159,16 @@ include_directories(
 # )
 
 add_executable(can_topic_adapter src/can_topic_adapter.cpp)
+#add_dependencies(can_topic_adapter ${$PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(can_topic_adapter ${lawnmower_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
 
 add_executable(vehicle_controller src/vehicle_controller.cpp)
+add_dependencies(vehicle_controller ${lawnmower_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
 
 add_executable(virtual_vehicle_controller src/virtual_vehicle_controller.cpp)
+add_dependencies(virtual_vehicle_controller ${lawnmower_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
 
 

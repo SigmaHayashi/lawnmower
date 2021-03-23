@@ -1,7 +1,8 @@
 #include "ros/ros.h"
-#include "lawnmower/command_to_lawnmower.h"
-#include "lawnmower/command_from_lawnmower.h"
+#include "lawnmower/CommandToLawnmower.h"
+#include "lawnmower/CommandFromLawnmower.h"
 #include "can_msgs/Frame.h"
+#include "std_msgs/Empty.h"
 
 // LawnMowerに送るコマンド
 int command_speed[2] = {0}; // left rightの順
@@ -20,9 +21,12 @@ const int crawler_control_error_max = 20;
 int crawler_control_error_fix_count = 0;
 const int crawler_control_error_fix_max = 2;
 
+// 草刈り刃のオンオフ
+bool grass_starting = false;
+
 
 // 何速で回すかを記録しておく
-void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
+void callbackCaommandToLawnmower(const lawnmower::CommandToLawnmower::ConstPtr& msg){
     ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
 
     //command_speed[0] = msg->speed_left;
@@ -201,6 +205,18 @@ void callbackSocketcanToTopic(const can_msgs::Frame::ConstPtr& msg){
     }
 }
 
+void callbackGrassStart(const std_msgs::Empty::ConstPtr& msg){
+    ROS_WARN("Grass Start");
+
+    grass_starting = true;
+}
+
+void callbackGrassStop(const std_msgs::Empty::ConstPtr& msg){
+    ROS_WARN("Grass Stop");
+
+    grass_starting = false;
+}
+
 
 // 草刈り機に送るコマンドを生成
 boost::array<uint8_t, 8> makeCommandData(){
@@ -238,6 +254,11 @@ boost::array<uint8_t, 8> makeCommandData(){
         data[1] = 8;
     }
 
+    // 草刈り刃
+    if(grass_starting){
+        data[3] = 1;
+    }
+
     //ROS_INFO("command_speed : %d, %d", command_speed[0], command_speed[1]);
     return data;
 }
@@ -252,7 +273,15 @@ int main(int argc, char** argv){
     ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);
 
     ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 10, callbackSocketcanToTopic);
-    ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 10);
+    ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::CommandFromLawnmower>("command_from_lawnmower", 10);
+
+    std::string sub_topic_grass_start;
+    nh.param<std::string>("can_topic_adapter/sub_topic_grass_start", sub_topic_grass_start, "grass_start");
+    ros::Subscriber sub_grass_start = nh.subscribe(sub_topic_grass_start, 10, callbackGrassStart);
+
+    std::string sub_topic_grass_stop;
+    nh.param<std::string>("can_topic_adapter/sub_topic_grass_stop", sub_topic_grass_stop, "grass_stop");
+    ros::Subscriber sub_grass_stop = nh.subscribe(sub_topic_grass_stop, 10, callbackGrassStop);
 
     ROS_INFO("Start CAN Topic Adapter");
 
@@ -267,7 +296,7 @@ int main(int argc, char** argv){
         msg_topic_to_socketcan.data = makeCommandData();
         pub_topic_to_socketcan.publish(msg_topic_to_socketcan);
 
-        lawnmower::command_from_lawnmower msg_command_from_lawnmower;
+        lawnmower::CommandFromLawnmower msg_command_from_lawnmower;
         msg_command_from_lawnmower.engine_speed = lawnmower_engine_speed;
         msg_command_from_lawnmower.speed_left = lawnmower_speed[0];
         msg_command_from_lawnmower.speed_right = lawnmower_speed[1];

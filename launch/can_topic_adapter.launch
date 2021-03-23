@@ -4,6 +4,8 @@
     </node>
 
     <node pkg="lawnmower" type="can_topic_adapter" name="can_topic_adapter" output="screen">
+        <param name="sub_topic_grass_start"  value="/orec/grass_start"/>
+        <param name="sub_topic_grass_stop"  value="/orec/grass_stop"/>
     </node>
 
 </launch>

@@ -3,7 +3,9 @@
 
 import rospy
 
-from lawnmower.msg import status, autostart, nav_manager_command, nav_manager_status
+#from lawnmower.msg import status, autostart, nav_manager_command, nav_manager_status
+from lawnmower.msg import Status, Autostart
+from bot_navigation.msg import nav_manager_command, nav_manager_status
 from std_msgs.msg import String, Empty
 from sensor_msgs.msg import NavSatFix
 
@@ -17,7 +19,7 @@ class CloudAdapter():
     def __init__(self):
         rospy.loginfo('Init CloudAdapter')
 
-        self.status_msg = status()
+        self.status_msg = Status()
         self.status_msg.header.frame_id = '/world_link'
         self.status_msg.seq_num = 0
         self.status_msg.cmd_name = 'status'
@@ -38,9 +40,9 @@ class CloudAdapter():
         self.gnss_fix_value = rospy.get_param('~fix_value', 1)
         self.gnss_float_value = rospy.get_param('~float_value', 0)
 
-        self.pub_status = rospy.Publisher(rospy.get_param('~pub_topic_status', 'status'), status, queue_size=10)
+        self.pub_status = rospy.Publisher(rospy.get_param('~pub_topic_status', 'status'), Status, queue_size=10)
 
-        rospy.Subscriber(rospy.get_param('~sub_topic_auto_start', 'auto_start'), autostart, self.callback_auto_start, queue_size=1)
+        rospy.Subscriber(rospy.get_param('~sub_topic_auto_start', 'auto_start'), Autostart, self.callback_auto_start, queue_size=1)
         rospy.Subscriber(rospy.get_param('~sub_topic_auto_stop', 'auto_stop'), Empty, self.callback_auto_stop, queue_size=1)
         rospy.Subscriber(rospy.get_param('~sub_topic_speed', 'speed'), String, self.callback_speed, queue_size=1)
         rospy.Subscriber(rospy.get_param('~sub_topic_grass_start', 'grass_start'), Empty, self.callback_grass_start, queue_size=1)
