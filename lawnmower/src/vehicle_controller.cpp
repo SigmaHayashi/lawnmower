@@ -19,8 +19,8 @@
 //#include "tf2_ros/transform_broadcaster.h"
 //#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include "lawnmower/msg/command_to_lawnmower.hpp"
-#include "lawnmower/msg/command_from_lawnmower.hpp"
+#include "lawnmower_msgs/msg/command_to_lawnmower.hpp"
+#include "lawnmower_msgs/msg/command_from_lawnmower.hpp"
 
 rclcpp::Node::SharedPtr node = nullptr;
 
@@ -41,9 +41,9 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
 
 // cmd_velからLawnMowerに送るコマンドを作る
 //lawnmower::command_to_lawnmower makeCommandToLawnmower(){
-lawnmower::msg::CommandToLawnmower makeCommandToLawnmower(){
+lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
     //lawnmower::command_to_lawnmower msg; // [m/sec] [rad/min]
-    lawnmower::msg::CommandToLawnmower msg; // [m/sec] [rad/min]
+    lawnmower_msgs::msg::CommandToLawnmower msg; // [m/sec] [rad/min]
 
     int cmd_vel_rpm[2];
     cmd_vel_rpm[0] = (cmd_vel.linear.x - distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
@@ -151,9 +151,9 @@ lawnmower::msg::CommandToLawnmower makeCommandToLawnmower(){
 
 // 草刈り機の状態を記録しておく
 //lawnmower::command_from_lawnmower var_command_from_lawnmower;
-lawnmower::msg::CommandFromLawnmower var_command_from_lawnmower;
+lawnmower_msgs::msg::CommandFromLawnmower var_command_from_lawnmower;
 //void callbackCommandFromLawnmower(const lawnmower::command_from_lawnmower::ConstPtr& msg){
-void callbackCommandFromLawnmower(const lawnmower::msg::CommandFromLawnmower::SharedPtr msg){
+void callbackCommandFromLawnmower(const lawnmower_msgs::msg::CommandFromLawnmower::SharedPtr msg){
     var_command_from_lawnmower = *msg;
 }
 
@@ -172,11 +172,11 @@ int main(int argc, char** argv){
     //ros::Subscriber sub_cmd_vel = nh.subscribe("cmd_vel", 10, callbackCmdVel);
     //ros::Publisher pub_command_to_lawnmower = nh.advertise<lawnmower::command_to_lawnmower>("command_to_lawnmower", 10);
     auto sub_cmd_vel = node->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10, callbackCmdVel);
-    auto pub_command_to_lawnmower = node->create_publisher<lawnmower::msg::CommandToLawnmower>("command_to_lawnmower", 10);
+    auto pub_command_to_lawnmower = node->create_publisher<lawnmower_msgs::msg::CommandToLawnmower>("command_to_lawnmower", 10);
 
     //ros::Subscriber sub_command_from_lawnmofer = nh.subscribe("command_from_lawnmower", 10, callbackCommandFromLawnmower);
     //ros::Publisher pub_odom = nh.advertise<nav_msgs::Odometry>("odom", 100);
-    auto sub_command_from_lawnmofer = node->create_subscription<lawnmower::msg::CommandFromLawnmower>("command_from_lawnmower", 10, callbackCommandFromLawnmower);
+    auto sub_command_from_lawnmofer = node->create_subscription<lawnmower_msgs::msg::CommandFromLawnmower>("command_from_lawnmower", 10, callbackCommandFromLawnmower);
     auto pub_odom = node->create_publisher<nav_msgs::msg::Odometry>("odom", 100);
 
     //ros::Rate loop_rate(20);

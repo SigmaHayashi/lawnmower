@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(lawnmower)
+project(lawnmower_msgs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -24,15 +24,17 @@ endif()
 #)
 
 find_package(ament_cmake REQUIRED)
+#find_package(ament_cmake_python REQUIRED)
 #find_package(roscpp REQUIRED)
-find_package(rclcpp REQUIRED)
 #find_package(rospy REQUIRED)
+#find_package(rclcpp REQUIRED)
+#find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
+#find_package(nav_msgs REQUIRED)
 #find_package(message_generation REQUIRED)
-find_package(lawnmower REQUIRED)
-find_package(can_msgs REQUIRED)
+#find_package(lawnmower REQUIRED)
+#find_package(can_msgs REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 
@@ -157,7 +159,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 #  include
 #  ${catkin_INCLUDE_DIRS}
 #)
-include_directories(include)
+#include_directories(include)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -189,17 +191,17 @@ include_directories(include)
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(can_topic_adapter src/can_topic_adapter.cpp)
+#add_executable(can_topic_adapter src/can_topic_adapter.cpp)
 #target_link_libraries(can_topic_adapter ${catkin_LIBRARIES})
-ament_target_dependencies(can_topic_adapter rclcpp std_msgs lawnmower can_msgs)
+#ament_target_dependencies(can_topic_adapter rclcpp std_msgs lawnmower can_msgs)
 
-add_executable(vehicle_controller src/vehicle_controller.cpp)
+#add_executable(vehicle_controller src/vehicle_controller.cpp)
 #target_link_libraries(vehicle_controller ${catkin_LIBRARIES})
-ament_target_dependencies(vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
+#ament_target_dependencies(vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
 
-add_executable(virtual_vehicle_controller src/virtual_vehicle_controller.cpp)
+#add_executable(virtual_vehicle_controller src/virtual_vehicle_controller.cpp)
 #target_link_libraries(virtual_vehicle_controller ${catkin_LIBRARIES})
-ament_target_dependencies(virtual_vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
+#ament_target_dependencies(virtual_vehicle_controller rclcpp std_msgs geometry_msgs nav_msgs lawnmower)
 
 
 #############
@@ -244,12 +246,19 @@ ament_target_dependencies(virtual_vehicle_controller rclcpp std_msgs geometry_ms
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-install(TARGETS
-  can_topic_adapter
-  vehicle_controller
-  virtual_vehicle_controller
-  DESTINATION lib/${PROJECT_NAME}
-)
+#install(TARGETS
+#  can_topic_adapter
+#  vehicle_controller
+#  virtual_vehicle_controller
+#  DESTINATION lib/${PROJECT_NAME}
+#)
+
+#ament_python_install_package(${PROJECT_NAME})
+
+#install(PROGRAMS
+  #scripts/cloud_adapter
+  #DESTINATION lib/${PROJECT_NAME}
+#)
 
 #############
 ## Testing ##

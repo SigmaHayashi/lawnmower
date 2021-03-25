@@ -5,8 +5,8 @@
 #include "can_msgs/Frame.h"
 */
 #include "rclcpp/rclcpp.hpp"
-#include "lawnmower/msg/command_to_lawnmower.hpp"
-#include "lawnmower/msg/command_from_lawnmower.hpp"
+#include "lawnmower_msgs/msg/command_to_lawnmower.hpp"
+#include "lawnmower_msgs/msg/command_from_lawnmower.hpp"
 #include "can_msgs/msg/frame.hpp"
 
 rclcpp::Node::SharedPtr node = nullptr;
@@ -31,7 +31,7 @@ const int crawler_control_error_fix_max = 2;
 
 // 何速で回すかを記録しておく
 //void callbackCaommandToLawnmower(const lawnmower::command_to_lawnmower::ConstPtr& msg){
-void callbackCaommandToLawnmower(const lawnmower::msg::CommandToLawnmower::SharedPtr msg){
+void callbackCaommandToLawnmower(const lawnmower_msgs::msg::CommandToLawnmower::SharedPtr msg){
     //ROS_INFO("Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
     RCLCPP_INFO(node->get_logger(), "Command to LawnMower : %d, %d", msg->speed_left, msg->speed_right);
 
@@ -268,13 +268,15 @@ int main(int argc, char** argv){
 
     //ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 10, callbackCaommandToLawnmower);
     //ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);
-    auto sub_command_to_lawnmower = node->create_subscription<lawnmower::msg::CommandToLawnmower>("command_to_lawnmower", 10, callbackCaommandToLawnmower);
-    auto pub_topic_to_socketcan = node->create_publisher<can_msgs::msg::Frame>("sent_messages", 10);
+    auto sub_command_to_lawnmower = node->create_subscription<lawnmower_msgs::msg::CommandToLawnmower>("command_to_lawnmower", 10, callbackCaommandToLawnmower);
+    //auto pub_topic_to_socketcan = node->create_publisher<can_msgs::msg::Frame>("sent_messages", 10);
+    auto pub_topic_to_socketcan = node->create_publisher<can_msgs::msg::Frame>("CAN/can0/transmit", 10);
 
     //ros::Subscriber sub_socketcan_to_topic = nh.subscribe("received_messages", 10, callbackSocketcanToTopic);
     //ros::Publisher pub_command_from_lawnmower = nh.advertise<lawnmower::command_from_lawnmower>("command_from_lawnmower", 10);
-    auto sub_socketcan_to_topic = node->create_subscription<can_msgs::msg::Frame>("received_messages", 10, callbackSocketcanToTopic);
-    auto pub_command_from_lawnmower = node->create_publisher<lawnmower::msg::CommandFromLawnmower>("command_from_lawnmower", 10);
+    //auto sub_socketcan_to_topic = node->create_subscription<can_msgs::msg::Frame>("received_messages", 10, callbackSocketcanToTopic);
+    auto sub_socketcan_to_topic = node->create_subscription<can_msgs::msg::Frame>("CAN/can0/receive", 10, callbackSocketcanToTopic);
+    auto pub_command_from_lawnmower = node->create_publisher<lawnmower_msgs::msg::CommandFromLawnmower>("command_from_lawnmower", 10);
 
     //ROS_INFO("Start CAN Topic Adapter");
     RCLCPP_INFO(node->get_logger(), "Start CAN Topic Adapter");
@@ -295,7 +297,7 @@ int main(int argc, char** argv){
         pub_topic_to_socketcan->publish(msg_topic_to_socketcan);
 
         //lawnmower::command_from_lawnmower msg_command_from_lawnmower;
-        lawnmower::msg::CommandFromLawnmower msg_command_from_lawnmower;
+        lawnmower_msgs::msg::CommandFromLawnmower msg_command_from_lawnmower;
         msg_command_from_lawnmower.engine_speed = lawnmower_engine_speed;
         msg_command_from_lawnmower.speed_left = lawnmower_speed[0];
         msg_command_from_lawnmower.speed_right = lawnmower_speed[1];

@@ -14,8 +14,8 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
-#include "lawnmower/msg/command_to_lawnmower.hpp"
-#include "lawnmower/msg/command_from_lawnmower.hpp"
+//#include "lawnmower_msgs/msg/command_to_lawnmower.hpp"
+//#include "lawnmower_msgs/msg/command_from_lawnmower.hpp"
 
 rclcpp::Node::SharedPtr node = nullptr;
 
