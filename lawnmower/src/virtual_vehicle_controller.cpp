@@ -196,7 +196,7 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
 
     odom.twist.twist.linear.x = (speed_left_mps + speed_right_mps) / 2;
     odom.twist.twist.angular.z = (speed_right_mps - speed_left_mps) / distance_wheel;
-    odom.twist.twist.angular.z *= 0.5;
+    odom.twist.twist.angular.z *= 0.7;
 }
 
 
