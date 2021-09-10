@@ -256,7 +256,8 @@ install(TARGETS
 #ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/cloud_adapter
+  #scripts/cloud_adapter
+  scripts/mow_planner
   DESTINATION lib/${PROJECT_NAME}
 )
 

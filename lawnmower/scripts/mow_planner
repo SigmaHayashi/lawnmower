@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+
+import rclpy
+
+from rclpy.node import Node
+
+from geometry_msgs.msg import PolygonStamped, Point32
+#from lawnmower_msgs.msg import Status
+
+import numpy
+import math
+
+class MowPlanner(Node):
+    def __init__(self):
+        super().__init__('mow_planner', namespace='mow_area')
+
+        sub_topic_name = self.declare_parameter('sub_topic_name', 'area_polygon').get_parameter_value().string_value
+        pub_topic_name = self.declare_parameter('pub_topic_name', 'goal_list_polygon').get_parameter_value().string_value
+
+        self.route_mode = self.declare_parameter('route_mode', 1).get_parameter_value().integer_value
+
+        mow_width = self.declare_parameter('mow_width', 1.0).get_parameter_value().double_value
+        overlap_rate = self.declare_parameter('overlap_rate', 0.0).get_parameter_value().double_value
+        self.grid_width = mow_width * (1 - overlap_rate)
+
+        self.create_subscription(PolygonStamped, sub_topic_name, self.callback_area_polygon, 1)
+
+        self.pub_goal_list_polygon = self.create_publisher(PolygonStamped, pub_topic_name, 1)
+
+        self.get_logger().info('Node Start: mow_planner')
+
+        if self.route_mode == 1:
+            self.get_logger().info('Route Mode {}: Go Straight and Turn 90 degree'.format(self.route_mode))
+        elif self.route_mode == 2:
+            self.get_logger().info('Route Mode {}: Go Straight and Turn 180 degree'.format(self.route_mode))
+        else:
+            self.get_logger().error('Route Mode {} is undeclared. Automatically set to 1'.format(self.route_mode))
+            self.route_mode = 1
+            self.get_logger().info('Route Mode {}: Go Straight and Turn 90 degree'.format(self.route_mode))
+
+
+    def callback_area_polygon(self, data):
+        # 3点以上必要
+        if len(data.polygon.points) < 3:
+            self.get_logger().warn('Need 3 or more points')
+            return
+
+        # Step0
+        # 最小値と最大値を取得
+        min_x = data.polygon.points[0].x
+        min_y = data.polygon.points[0].y
+        max_x = data.polygon.points[0].x
+        max_y = data.polygon.points[0].y
+
+        for point in data.polygon.points:
+            min_x = min(min_x, point.x)
+            min_y = min(min_y, point.y)
+            max_x = max(max_x, point.x)
+            max_y = max(max_y, point.y)
+
+        if min_x == max_x or min_y == max_y:
+            self.get_logger().warn('Polygon does not have area')
+            return
+
+        # グリッド作成
+        grid_x = int((max_x - min_x) // self.grid_width)
+        if (max_x - min_x) % self.grid_width != 0:
+            grid_x = grid_x + 1
+
+        grid_y = int((max_y - min_y) // self.grid_width)
+        if (max_y - min_y) % self.grid_width != 0:
+            grid_y = grid_y + 1
+
+        grid = numpy.full((grid_x, grid_y), False)
+
+        self.get_logger().info('Grid: {} x {}'.format(grid_x, grid_y))
+
+        # Step1 頂点間直線関数(y=ax+b)を計算
+        func_list = numpy.zeros((len(data.polygon.points), 2))
+        for i in range(len(data.polygon.points)):
+            if i == len(data.polygon.points) - 1:
+                i = -1
+
+            if data.polygon.points[i].x == data.polygon.points[i+1].x:
+                a = math.inf
+                b = data.polygon.points[i].x
+            else:
+                a = (data.polygon.points[i+1].y - data.polygon.points[i].y) / (data.polygon.points[i+1].x - data.polygon.points[i].x)
+                b = data.polygon.points[i].y - a * data.polygon.points[i].x
+            func_list[i] = a, b
+
+            if i == -1:
+                i = len(data.polygon.points)
+            
+            self.get_logger().info('Func[{}]: y = {:.4f} x + {:.4f}'.format(i, a, b))
+
+        # Step2
+        # 頂点があるグリッドをTrueに
+        for point in data.polygon.points:
+            x = int((point.x - min_x) // self.grid_width)
+            y = int((point.y - min_y) // self.grid_width)
+            #print('vertice: {}, {}'.format(x, y))
+
+            #x = min(x, grid_x - 1)
+            #y = min(y, grid_y - 1)
+
+            #grid[x, y] = True
+            if x != grid_x and y != grid_y:
+                grid[x, y] = True
+
+            if (point.x - min_x) % self.grid_width == 0.0 and (point.y - min_y) % self.grid_width == 0.0 and x != 0 and y != 0:
+                grid[x-1, y-1] = True
+
+            if (point.x - min_x) % self.grid_width == 0.0 and x != 0 and y != grid_y:
+                grid[x-1, y] = True
+
+            if (point.y - min_y) % self.grid_width == 0.0 and y != 0 and x != grid_x:
+                grid[x, y-1] = True
+
+            '''
+            if x != grid_x and y != grid_y:
+                grid[x, y] = True
+
+                if (point.x - min_x) % self.grid_width == 0.0 and (point.y - min_y) % self.grid_width == 0.0 and x != 0 and y != 0:
+                    grid[x-1, y-1] = True
+
+                if (point.x - min_x) % self.grid_width == 0.0 and x != 0:
+                    grid[x-1, y] = True
+
+                if (point.y - min_y) % self.grid_width == 0.0 and y != 0:
+                    grid[x, y-1] = True
+                    
+            elif x == grid_x and y != grid_y:
+                grid[x-1, y] = True
+
+                if (point.y - min_y) % self.grid_width == 0.0 and y != 0:
+                    grid[x-1, y-1] = True
+
+            elif x != grid_x and y == grid_y:
+                grid[x, y-1] = True
+
+                if (point.x - min_x) % self.grid_width == 0.0 and x != 0:
+                    grid[x-1, y-1] = True
+
+            else: # elif x == grid_x and y == grid_y:
+                grid[x-1, y-1] = True
+            '''
+        
+        #print(grid)
+        
+        # 頂点間直線が通過するグリッドをTrueに
+        i = 0
+        for func in func_list:
+            '''
+            if func[0] == math.inf: # 縦直線
+                x = int((func[1] - min_x) // self.grid_width)
+                #x = min(x, grid_x - 1)
+                #grid[x, :] = True
+                start_y = int((min(data.polygon.points[i].y, data.polygon.points[i+1].y) - min_y) // self.grid_width)
+                end_y = int((max(data.polygon.points[i].y, data.polygon.points[i+1].y) - min_y) // self.grid_width)
+                end_y = min(end_y, grid_y - 1)
+
+                if x != grid_x:
+                    #grid[x, :] = True
+                    for y in range(start_y, end_y+1):
+                        grid[x, y] = True
+
+                if (func[1] - min_x) % self.grid_width == 0.0 and x != 0:
+                    #grid[x-1, :] = True
+                    for y in range(start_y, end_y+1):
+                        grid[x-1, y] = True
+            '''
+
+            #elif abs(func[0]) > 1.0: # 勾配が急(a > 1.0 or a < -1.0)な直線
+            #    print()
+
+            #else:
+            if func[0] != math.inf:
+                start_x = int((min(data.polygon.points[i].x, data.polygon.points[i+1].x) - min_x) // self.grid_width) + 1
+                end_x = int((max(data.polygon.points[i].x, data.polygon.points[i+1].x) - min_x) // self.grid_width)
+                end_x = min(end_x, grid_x - 1)
+
+                for x in range(start_x, end_x+1):
+                    y_ = func[0] * (min_x + self.grid_width * x) + func[1]
+                    y = int((y_ - min_y) // self.grid_width)
+                    #y = min(y, grid_y - 1)
+                    #grid[x-1, y] = grid[x, y] = True
+                    if y != grid_y:
+                        grid[x-1, y] = grid[x, y] = True
+
+                    if (y_ - min_y) % self.grid_width == 0.0 and y != 0:
+                         grid[x-1, y-1] = grid[x, y-1] = True
+
+            i = i + 1
+            if i == len(data.polygon.points) - 1:
+                i = -1
+
+        #print(grid)
+
+        # Step3
+        # 各列の両端のみ残して間のグリッドをFalseに
+        count_true = numpy.count_nonzero(grid, axis=1)
+        true_y_list = numpy.full((grid_x, 2), -1)
+        for x in range(grid_x):
+            for y in range(grid_y):
+                if true_y_list[x, 0] == -1 and grid[x, y]:
+                    true_y_list[x, 0] = y
+                if true_y_list[x, 1] == -1 and grid[x, grid_y-1 - y]:
+                    true_y_list[x, 1] = grid_y-1 - y
+
+                if true_y_list[x, 0] != -1 and true_y_list[x, 1] != -1:
+                    break
+
+            if count_true[x] > 2:
+                #first_true_y = final_true_y = -1
+                #for y in range(grid_y):
+                #    if first_true_y == -1 and grid[x, y]:
+                #        first_true_y = y
+                #    if final_true_y == -1 and grid[x, grid_y-1 - y]:
+                #        final_true_y = y
+
+                for y in range(true_y_list[x, 0]+1, true_y_list[x, 1]):
+                    grid[x, y] = False
+
+        #print(true_y_list)
+
+        #print(grid)
+
+        # Step4
+        # 各列のTrueのグリッドをPolygonに追加
+        pub_msg = PolygonStamped()
+        pub_msg.header = data.header
+
+        for x in range(grid_x):
+            #point = Point32()
+            #point.x = min_x + self.grid_width * (x + 0.5)
+            #point.z = 0.0
+
+            if self.route_mode == 1: # まっすぐ前進して隣にあるゴールを向く(四角の場合90度ターン)
+                if x % 2 == 0:
+                    point = Point32()
+                    point.x = min_x + self.grid_width * (x + 0.5)
+                    point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
+                    point.z = 0.0
+                    pub_msg.polygon.points.append(point)
+                    self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                    
+                    point = Point32()
+                    point.x = min_x + self.grid_width * (x + 0.5)
+                    point.z = 0.0
+                    point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
+                    pub_msg.polygon.points.append(point)
+                    self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+
+                else:
+                    point = Point32()
+                    point.x = min_x + self.grid_width * (x + 0.5)
+                    point.z = 0.0
+                    point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
+                    pub_msg.polygon.points.append(point)
+                    self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                    
+                    point = Point32()
+                    point.x = min_x + self.grid_width * (x + 0.5)
+                    point.z = 0.0
+                    point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
+                    pub_msg.polygon.points.append(point)
+                    self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+
+            elif self.route_mode == 2: # ジグザグ
+                point = Point32()
+                point.x = min_x + self.grid_width * (x + 0.5)
+                point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
+                point.z = 0.0
+                pub_msg.polygon.points.append(point)
+                self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                
+                point = Point32()
+                point.x = min_x + self.grid_width * (x + 0.5)
+                point.z = 0.0
+                point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
+                pub_msg.polygon.points.append(point)
+                self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+
+        self.pub_goal_list_polygon.publish(pub_msg)
+
+        
+
+if __name__ == '__main__':
+    try:
+        rclpy.init()
+        node = MowPlanner()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('Node Finish: mow_planner')
+        node.destroy_node()
+        rclpy.shutdown()

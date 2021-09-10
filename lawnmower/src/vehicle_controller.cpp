@@ -25,7 +25,8 @@
 rclcpp::Node::SharedPtr node = nullptr;
 
 const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
-const double distance_wheel = 0.75;            // 左右輪の距離[m]
+//const double distance_wheel = 0.75;            // 左右輪の距離[m]
+const double distance_wheel = 0.70;            // 左右輪の距離[m]
 
 // cmd_velに対するコールバック
 //geometry_msgs::Twist cmd_vel;
@@ -68,7 +69,8 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         }
         //else if(cmd_vel_rpm[0] >= 268 / 2){
         else if(cmd_vel_rpm[0] > 0){
-            msg.speed_left = 1;
+            //msg.speed_left = 1;
+            msg.speed_left = 2;// 1速だと回らないため
         }
         else{
             msg.speed_left = 0;
@@ -89,7 +91,8 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         }
         //else if(cmd_vel_rpm[0] <= 268 / -2){
         else if(cmd_vel_rpm[0] < 0){
-            msg.speed_left = -1;
+            //msg.speed_left = -1;
+            msg.speed_left = -2; // 1速だと回らないため
         }
         else{
             msg.speed_left = 0;
@@ -109,12 +112,14 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[1] >= (1109 + 673) / 2){
             msg.speed_right = 3;
         }
+        
         else if(cmd_vel_rpm[1] >= (673 + 268) / 2){
             msg.speed_right = 2;
         }
         //else if(cmd_vel_rpm[1] >= 268 / 2){
         else if(cmd_vel_rpm[1] > 0){
-            msg.speed_right = 1;
+            //msg.speed_right = 1;
+            msg.speed_right = 2; // 1速だと回らないため
         }
         else{
             msg.speed_right = 0;
@@ -135,7 +140,8 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         }
         //else if(cmd_vel_rpm[1] <= 268 / -2){
         else if(cmd_vel_rpm[1] < 0){
-            msg.speed_right = -1;
+            //msg.speed_right = -1;
+            msg.speed_right = -2; // 1速だと回らないため
         }
         else{
             msg.speed_right = 0;
