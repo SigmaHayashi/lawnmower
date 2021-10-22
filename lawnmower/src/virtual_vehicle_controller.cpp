@@ -19,8 +19,10 @@
 
 rclcpp::Node::SharedPtr node = nullptr;
 
-const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
-const double distance_wheel = 0.75;            // 左右輪の距離[m]
+//const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
+const double distance_per_rot = 12.78 / 1000; // モーター1回転で進む距離[m]
+//const double distance_wheel = 0.75;           // 左右輪の距離[m]
+const double distance_wheel = 0.70;           // 左右輪の距離[m]
 
 
 // cmd_vel -> command_to_lawnmower -> command_from_lawnmower -> odom
@@ -45,7 +47,19 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
     int speed_left = 0;
     int speed_right = 0;
     if(cmd_vel_rpm[0] > 0){
-        if(cmd_vel_rpm[0] >= (2013 + 1602) / 2){
+        if(cmd_vel_rpm[0] >= (3951 + 3290) / 2){ // 20211022追加
+            speed_left_simple = 8;
+            speed_left = 3951;
+        }
+        else if(cmd_vel_rpm[0] >= (3290 + 2637) / 2){ // 20211022追加
+            speed_left_simple = 7;
+            speed_left = 3290;
+        }
+        else if(cmd_vel_rpm[0] >= (2637 + 2013) / 2){ // 20211022追加
+            speed_left_simple = 6;
+            speed_left = 2637;
+        }
+        else if(cmd_vel_rpm[0] >= (2013 + 1602) / 2){
             //msg.speed_left = 5;
             speed_left_simple = 5;
             speed_left = 2013;
@@ -78,7 +92,19 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
         }
     }
     else if(cmd_vel_rpm[0] < 0){
-        if(cmd_vel_rpm[0] <= (2013 + 1602) / -2){
+        if(cmd_vel_rpm[0] <= (3951 + 3290) / -2){ // 20211022追加
+            speed_left_simple = -8;
+            speed_left = -3951;
+        }
+        else if(cmd_vel_rpm[0] <= (3290 + 2637) / -2){ // 20211022追加
+            speed_left_simple = -7;
+            speed_left = -3290;
+        }
+        else if(cmd_vel_rpm[0] <= (2637 + 2013) / -2){ // 20211022追加
+            speed_left_simple = -6;
+            speed_left = -2637;
+        }
+        else if(cmd_vel_rpm[0] <= (2013 + 1602) / -2){
             //msg.speed_left = -5;
             speed_left_simple = -5;
             speed_left = -2013;
@@ -117,7 +143,19 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
     }
 
     if(cmd_vel_rpm[1] > 0){
-        if(cmd_vel_rpm[1] >= (2013 + 1602) / 2){
+        if(cmd_vel_rpm[1] >= (3951 + 3290) / 2){ // 20211022追加
+            speed_right_simple = 8;
+            speed_right = 3951;
+        }
+        else if(cmd_vel_rpm[1] >= (3290 + 2637) / 2){ // 20211022追加
+            speed_right_simple = 7;
+            speed_right = 3290;
+        }
+        else if(cmd_vel_rpm[1] >= (2637 + 2013) / 2){ // 20211022追加
+            speed_right_simple = 6;
+            speed_right = 2637;
+        }
+        else if(cmd_vel_rpm[1] >= (2013 + 1602) / 2){
             //msg.speed_right = 5;
             speed_right_simple = 5;
             speed_right = 2013;
@@ -150,7 +188,19 @@ void callbackCmdVel(const geometry_msgs::msg::Twist::SharedPtr msg){
         }
     }
     else if(cmd_vel_rpm[1] < 0){
-        if(cmd_vel_rpm[1] <= (2013 + 1602) / -2){
+        if(cmd_vel_rpm[1] <= (3951 + 3290) / -2){ // 20211022追加
+            speed_right_simple = -8;
+            speed_right = -3951;
+        }
+        else if(cmd_vel_rpm[1] <= (3290 + 2637) / -2){ // 20211022追加
+            speed_right_simple = -7;
+            speed_right = -3290;
+        }
+        else if(cmd_vel_rpm[1] <= (2637 + 2013) / -2){ // 20211022追加
+            speed_right_simple = -6;
+            speed_right = -2637;
+        }
+        else if(cmd_vel_rpm[1] <= (2013 + 1602) / -2){
             //msg.speed_right = -5;
             speed_right_simple = -5;
             speed_right = -2013;

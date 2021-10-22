@@ -108,9 +108,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CommandToLawnmower.msg"
   "msg/CommandFromLawnmower.msg"
   #"msg/Autostart.msg"
-  "msg/Status.msg"
-  "msg/LatLon.msg"
-  "msg/LatLonArray.msg"
+  #"msg/Status.msg"
+  #"msg/LatLon.msg"
+  #"msg/LatLonArray.msg"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

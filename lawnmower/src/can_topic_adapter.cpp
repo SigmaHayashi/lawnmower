@@ -257,7 +257,8 @@ std::array<uint8_t, 8> makeCommandData(){
     RCLCPP_INFO(node->get_logger(), "Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
 
     // 左クローラー
-    if(command_speed[0] >= -5 && command_speed[0] <= 5){
+    //if(command_speed[0] >= -5 && command_speed[0] <= 5){
+    if(command_speed[0] >= -8 && command_speed[0] <= 8){
         data[2] = 8 - command_speed[0];
     }
     else{
@@ -266,7 +267,8 @@ std::array<uint8_t, 8> makeCommandData(){
     }
 
     // 右クローラー
-    if(command_speed[1] >= -5 && command_speed[1] <= 5){
+    //if(command_speed[1] >= -5 && command_speed[1] <= 5){
+    if(command_speed[1] >= -8 && command_speed[1] <= 8){
         data[1] = 8 - command_speed[1];
     }
     else{

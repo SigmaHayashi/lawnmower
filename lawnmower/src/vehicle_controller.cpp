@@ -24,7 +24,8 @@
 
 rclcpp::Node::SharedPtr node = nullptr;
 
-const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
+//const double distance_per_rot = 14.06 / 1000; // モーター1回転で進む距離[m]
+const double distance_per_rot = 12.78 / 1000; // モーター1回転で進む距離[m]
 //const double distance_wheel = 0.75;            // 左右輪の距離[m]
 const double distance_wheel = 0.70;            // 左右輪の距離[m]
 
@@ -55,7 +56,16 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
     RCLCPP_INFO(node->get_logger(), "cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
 
     if(cmd_vel_rpm[0] > 0){
-        if(cmd_vel_rpm[0] >= (2013 + 1602) / 2){
+        if(cmd_vel_rpm[0] >= (3951 + 3290) / 2){ // 20211022追加
+            msg.speed_left = 8;
+        }
+        else if(cmd_vel_rpm[0] >= (3290 + 2637) / 2){ // 20211022追加
+            msg.speed_left = 7;
+        }
+        else if(cmd_vel_rpm[0] >= (2637 + 2013) / 2){ // 20211022追加
+            msg.speed_left = 6;
+        }
+        else if(cmd_vel_rpm[0] >= (2013 + 1602) / 2){
             msg.speed_left = 5;
         }
         else if(cmd_vel_rpm[0] >= (1602 + 1109) / 2){
@@ -77,7 +87,16 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         }
     }
     else if(cmd_vel_rpm[0] < 0){
-        if(cmd_vel_rpm[0] <= (2013 + 1602) / -2){
+        if(cmd_vel_rpm[0] <= (3951 + 3290) / -2){ // 20211022追加
+            msg.speed_left = -8;
+        }
+        else if(cmd_vel_rpm[0] <= (3290 + 2637) / -2){ // 20211022追加
+            msg.speed_left = -7;
+        }
+        else if(cmd_vel_rpm[0] <= (2637 + 2013) / -2){ // 20211022追加
+            msg.speed_left = -6;
+        }
+        else if(cmd_vel_rpm[0] <= (2013 + 1602) / -2){
             msg.speed_left = -5;
         }
         else if(cmd_vel_rpm[0] <= (1602 + 1109) / -2){
@@ -103,7 +122,16 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
     }
 
     if(cmd_vel_rpm[1] > 0){
-        if(cmd_vel_rpm[1] >= (2013 + 1602) / 2){
+        if(cmd_vel_rpm[1] >= (3951 + 3290) / 2){ // 20211022追加
+            msg.speed_right = 8;
+        }
+        else if(cmd_vel_rpm[1] >= (3290 + 2637) / 2){ // 20211022追加
+            msg.speed_right = 7;
+        }
+        else if(cmd_vel_rpm[1] >= (2637 + 2013) / 2){ // 20211022追加
+            msg.speed_right = 6;
+        }
+        else if(cmd_vel_rpm[1] >= (2013 + 1602) / 2){
             msg.speed_right = 5;
         }
         else if(cmd_vel_rpm[1] >= (1602 + 1109) / 2){
@@ -112,7 +140,6 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         else if(cmd_vel_rpm[1] >= (1109 + 673) / 2){
             msg.speed_right = 3;
         }
-        
         else if(cmd_vel_rpm[1] >= (673 + 268) / 2){
             msg.speed_right = 2;
         }
@@ -126,7 +153,16 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
         }
     }
     else if(cmd_vel_rpm[1] < 0){
-        if(cmd_vel_rpm[1] <= (2013 + 1602) / -2){
+        if(cmd_vel_rpm[1] <= (3951 + 3290) / -2){ // 20211022追加
+            msg.speed_right = -8;
+        }
+        else if(cmd_vel_rpm[1] <= (3290 + 2637) / -2){ // 20211022追加
+            msg.speed_right = -7;
+        }
+        else if(cmd_vel_rpm[1] <= (2637 + 2013) / -2){ // 20211022追加
+            msg.speed_right = -6;
+        }
+        else if(cmd_vel_rpm[1] <= (2013 + 1602) / -2){
             msg.speed_right = -5;
         }
         else if(cmd_vel_rpm[1] <= (1602 + 1109) / -2){

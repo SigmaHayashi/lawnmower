@@ -12,7 +12,8 @@ origin_lon = 130.0
 angle_offset = 0.0
 scale_offset = 1.0
 '''
-offset_param_file = '/home/common/ros2_ws/src/bot_navigation/param/gnss_offset.yaml'
+#offset_param_file = '/home/common/ros2_ws/src/bot_navigation/param/gnss_offset.yaml'
+offset_param_file = '/home/common/ros2_ws/src/latlng_tools/latlng_tools/param/gnss_offset.yaml'
 
 
 def generate_launch_description():
@@ -26,13 +27,15 @@ def generate_launch_description():
                 'sub_topic_name': 'area_polygon',
                 'pub_topic_name': 'goal_list_polygon',
 
+                #'route_mode': 1,
                 'route_mode': 2,
                 'mow_width': 0.5,
                 'overlap_rate': 0.2
             }]
         ),
         Node(
-            package='bot_navigation',
+            #package='bot_navigation',
+            package='latlng_tools',
             executable='latlng2pos_polygon',
             namespace='mow_area',
             output='screen',
@@ -45,7 +48,11 @@ def generate_launch_description():
                     #'angle_offset': angle_offset,
                     #'scale_offset': scale_offset,
 
+                    'use_polygon64': True,
+                    #'use_polygon64': False,
+
                     'sub_topic_name': 'area_latlon',
+                    #'sub_topic_name': 'area_latlon_64',
                     'pub_topic_name': 'area_polygon'
                 }
             ]
@@ -59,6 +66,7 @@ def generate_launch_description():
                 'sub_topic_name': 'goal_list_polygon',
                 'pub_topic_name': '/nav_manager/goal_list',
 
+                #'yaw_is_fixed': False,
                 'yaw_is_fixed': True,
                 'fixed_yaw': 1.57,
 
@@ -68,7 +76,8 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='bot_navigation',
+            #package='bot_navigation',
+            package='latlng_tools',
             executable='pos2latlng_polygon',
             namespace='mow_area',
             output='screen',
@@ -87,7 +96,8 @@ def generate_launch_description():
             ]
         ),
         Node(
-            package='bot_navigation',
+            #package='bot_navigation',
+            package='latlng_tools',
             executable='polygon2markerline',
             namespace='mow_area',
             output='screen',
@@ -109,7 +119,8 @@ def generate_launch_description():
             output='screen',
         ),
         Node(
-            package='bot_navigation',
+            #package='bot_navigation',
+            package='latlng_tools',
             executable='latlng2pos_polygon',
             namespace='nav_manager',
             output='screen',
@@ -121,6 +132,8 @@ def generate_launch_description():
                     #'origin_lon': origin_lon,
                     #'angle_offset': angle_offset,
                     #'scale_offset': scale_offset,
+
+                    'use_polygon64': True,
 
                     'sub_topic_name': 'goal_list_latlon',
                     'pub_topic_name': 'goal_list_polygon'
