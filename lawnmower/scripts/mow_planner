@@ -4,9 +4,13 @@
 import rclpy
 
 from rclpy.node import Node
+from rclpy.duration import Duration
 
 from geometry_msgs.msg import PolygonStamped, Point32
+from std_msgs.msg import Empty
 #from lawnmower_msgs.msg import Status
+
+import tf2_ros
 
 import numpy
 import math
@@ -18,6 +22,15 @@ class MowPlanner(Node):
         sub_topic_name = self.declare_parameter('sub_topic_name', 'area_polygon').get_parameter_value().string_value
         pub_topic_name = self.declare_parameter('pub_topic_name', 'goal_list_polygon').get_parameter_value().string_value
 
+        sub_topic_here_name = self.declare_parameter('sub_topic_here_name', 'select/here').get_parameter_value().string_value
+        sub_topic_complete_name = self.declare_parameter('sub_topic_complete_name', 'select/complete').get_parameter_value().string_value
+        sub_topic_remove_one_name = self.declare_parameter('sub_topic_remove_one_name', 'select/remove_one').get_parameter_value().string_value
+        sub_topic_remove_all_name = self.declare_parameter('sub_topic_remove_all_name', 'select/remove_all').get_parameter_value().string_value
+        pub_topic_area_name = self.declare_parameter('pub_topic_area_name', 'select/area_polygon').get_parameter_value().string_value
+
+        self.select_area = PolygonStamped()
+        self.select_area.header.frame_id = 'map'
+
         self.route_mode = self.declare_parameter('route_mode', 1).get_parameter_value().integer_value
 
         mow_width = self.declare_parameter('mow_width', 1.0).get_parameter_value().double_value
@@ -25,8 +38,17 @@ class MowPlanner(Node):
         self.grid_width = mow_width * (1 - overlap_rate)
 
         self.create_subscription(PolygonStamped, sub_topic_name, self.callback_area_polygon, 1)
+        self.create_subscription(Empty, sub_topic_here_name, self.callback_select_here, 1)
+        self.create_subscription(Empty, sub_topic_complete_name, self.callback_select_complete, 1)
+        self.create_subscription(Empty, sub_topic_remove_one_name, self.callback_select_remove_one, 1)
+        self.create_subscription(Empty, sub_topic_remove_all_name, self.callback_select_remove_all, 1)
 
         self.pub_goal_list_polygon = self.create_publisher(PolygonStamped, pub_topic_name, 1)
+        self.pub_select_area = self.create_publisher(PolygonStamped, pub_topic_area_name, 1)
+        self.pub_area = self.create_publisher(PolygonStamped, sub_topic_name, 1)
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         self.get_logger().info('Node Start: mow_planner')
 
@@ -91,7 +113,7 @@ class MowPlanner(Node):
             func_list[i] = a, b
 
             if i == -1:
-                i = len(data.polygon.points)
+                i = len(data.polygon.points) - 1
             
             self.get_logger().info('Func[{}]: y = {:.4f} x + {:.4f}'.format(i, a, b))
 
@@ -244,14 +266,14 @@ class MowPlanner(Node):
                     point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
                     point.z = 0.0
                     pub_msg.polygon.points.append(point)
-                    self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                    self.get_logger().info('point[{0},0]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
                     
                     point = Point32()
                     point.x = min_x + self.grid_width * (x + 0.5)
                     point.z = 0.0
                     point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
                     pub_msg.polygon.points.append(point)
-                    self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+                    self.get_logger().info('point[{0},1]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
 
                 else:
                     point = Point32()
@@ -259,14 +281,14 @@ class MowPlanner(Node):
                     point.z = 0.0
                     point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
                     pub_msg.polygon.points.append(point)
-                    self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                    self.get_logger().info('point[{0},0]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
                     
                     point = Point32()
                     point.x = min_x + self.grid_width * (x + 0.5)
                     point.z = 0.0
                     point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
                     pub_msg.polygon.points.append(point)
-                    self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+                    self.get_logger().info('point[{0},1]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
 
             elif self.route_mode == 2: # ジグザグ
                 point = Point32()
@@ -274,16 +296,70 @@ class MowPlanner(Node):
                 point.y = min_y + self.grid_width * (true_y_list[x, 0] + 0.5)
                 point.z = 0.0
                 pub_msg.polygon.points.append(point)
-                self.get_logger().info('point[{},0]: {}, {}'.format(x, point.x, point.y))
+                self.get_logger().info('point[{0},0]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
                 
                 point = Point32()
                 point.x = min_x + self.grid_width * (x + 0.5)
                 point.z = 0.0
                 point.y = min_y + self.grid_width * (true_y_list[x, 1] + 0.5)
                 pub_msg.polygon.points.append(point)
-                self.get_logger().info('point[{},1]: {}, {}'.format(x, point.x, point.y))
+                self.get_logger().info('point[{0},1]: {1:.2f}, {2:.2f}'.format(x, point.x, point.y))
 
         self.pub_goal_list_polygon.publish(pub_msg)
+
+
+    # 作業範囲を現在位置から指定
+    def callback_select_here(self, data):
+        try:
+            map_to_base = self.tf_buffer.lookup_transform('map', 'base_footprint', Duration())
+            #self.get_logger().info('tf2 OK')
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            self.get_logger().warn('tf2 miss...')
+            return
+
+        map_to_base_point = Point32()
+        map_to_base_point.x = map_to_base.transform.translation.x
+        map_to_base_point.y = map_to_base.transform.translation.y
+        map_to_base_point.z = 0.0
+        self.select_area.polygon.points.append(map_to_base_point)
+
+        self.select_area.header.stamp = self.get_clock().now().to_msg()
+
+        msg = 'Add point (' + str(len(self.select_area.polygon.points) - 1) + ') to select area: '
+        msg = msg + '({0:.2f}, {1:.2f})'.format(map_to_base_point.x, map_to_base_point.y)
+        self.get_logger().info(msg)
+
+        self.pub_select_area.publish(self.select_area)
+
+
+    # 作業範囲全取り消し
+    def callback_select_remove_all(self, data):
+        self.get_logger().info('Remove all point')
+
+        self.select_area.polygon.points.clear()
+        self.select_area.header.stamp = self.get_clock().now().to_msg()
+
+        self.pub_select_area.publish(self.select_area)
+
+
+    # 作業範囲1つ取り消し
+    def callback_select_remove_one(self, data):
+        msg = 'Remove point (' + str(len(self.select_area.polygon.points) - 1) + ')'
+        self.get_logger().info(msg)
+
+        self.select_area.polygon.points.pop()
+        self.select_area.header.stamp = self.get_clock().now().to_msg()
+
+        self.pub_select_area.publish(self.select_area)
+
+
+    # 作業範囲確定
+    def callback_select_complete(self, data):
+        self.get_logger().info('Complete selecting area')
+
+        self.select_area.header.stamp = self.get_clock().now().to_msg()
+
+        self.pub_area.publish(self.select_area)
 
         
 

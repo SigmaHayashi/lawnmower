@@ -30,8 +30,9 @@ def generate_launch_description():
                 #'route_mode': 1,
                 'route_mode': 2,
                 'mow_width': 0.5,
-                'overlap_rate': 0.2
-            }]
+                'overlap_rate': 0.0
+            }],
+            remappings=[('/mow_area/tf', '/tf'), ('/mow_area/tf_static', '/tf_static')]
         ),
         Node(
             #package='bot_navigation',
@@ -107,7 +108,41 @@ def generate_launch_description():
                 'pub_topic_name': 'goal_list_latlon_marker',
 
                 'marker_color_rgb': [0.0, 1.0, 1.0],
-                'marker_scale': [0.1, 0.1, 0.1]
+                'marker_scale': [0.1, 0.1, 0.1],
+
+                'log_print': False
+            }]
+        ),
+
+        # 選択した作業範囲可視化
+        Node(
+            package='latlng_tools',
+            executable='pos2latlng_polygon',
+            namespace='mow_area/select',
+            output='screen',
+            parameters=[
+                offset_param_file,
+                {
+                    'sub_topic_name': 'area_polygon',
+                    'pub_topic_name': 'area_latlon',
+
+                    'log_print': False
+                }
+            ]
+        ),
+        Node(
+            package='latlng_tools',
+            executable='polygon2markerline',
+            namespace='mow_area/select',
+            output='screen',
+            parameters=[{
+                'sub_topic_name': 'area_latlon',
+                'pub_topic_name': 'area_latlon_marker',
+
+                'marker_color_rgb': [1.0, 0.2, 0.2],
+                'marker_scale': [0.2, 0.2, 0.2],
+
+                'log_print': False
             }]
         ),
         
