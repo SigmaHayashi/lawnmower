@@ -14,6 +14,7 @@ rclcpp::Node::SharedPtr node = nullptr;
 
 // LawnMowerに送るコマンド
 int command_speed[2] = {0}; // left rightの順
+int command_speed_raw[2] = {0};
 bool command_grass = false;
 
 // LawnMowerから送られてくる情報
@@ -41,6 +42,8 @@ void callbackCaommandToLawnmower(const lawnmower_msgs::msg::CommandToLawnmower::
 
     //command_speed[0] = msg->speed_left;
     //command_speed[1] = msg->speed_right;
+    command_speed_raw[0] = msg->speed_left;
+    command_speed_raw[1] = msg->speed_right;
     
     // 正回転・逆回転を急に切り替えないようにする対応 (一度0を送る)
     // 左クローラー
@@ -106,7 +109,7 @@ void callbackSocketcanToTopic(const can_msgs::msg::Frame::SharedPtr msg){
         lawnmower_speed[0] = (msg->data[4] << 8) | msg->data[3];
         lawnmower_speed[1] = (msg->data[2] << 8) | msg->data[1];
         RCLCPP_INFO(node->get_logger(), "LawnMower speed (raw): %d, %d", lawnmower_speed[0], lawnmower_speed[1]);
-        RCLCPP_INFO(node->get_logger(), "Rotation Direction: %d", msg->data[7]);
+        //RCLCPP_INFO(node->get_logger(), "Rotation Direction: %d", msg->data[7]);
         switch(msg->data[7]){
             case 0:
             if(lawnmower_speed[0] != 0 || lawnmower_speed[1] != 0){
@@ -222,13 +225,11 @@ void callbackSocketcanToTopic(const can_msgs::msg::Frame::SharedPtr msg){
 }
 
 void callbackGrassStart(const std_msgs::msg::Empty::SharedPtr msg){
-//void callbackGrassStart(){
     RCLCPP_INFO(node->get_logger(), "Grass Start!!");
     command_grass = true;
 }
 
 void callbackGrassStop(const std_msgs::msg::Empty::SharedPtr msg){
-//void callbackGrassStop(){
     RCLCPP_INFO(node->get_logger(), "Grass Stop!!");
     command_grass = false;
 }
@@ -253,8 +254,14 @@ std::array<uint8_t, 8> makeCommandData(){
     }
     //ROS_INFO("Crawler Control Error: %d", crawler_control_error_count);
     //ROS_INFO("Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
-    RCLCPP_INFO(node->get_logger(), "Crawler Control Error: %d", crawler_control_error_count);
-    RCLCPP_INFO(node->get_logger(), "Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
+    //RCLCPP_INFO(node->get_logger(), "Crawler Control Error: %d", crawler_control_error_count);
+    //RCLCPP_INFO(node->get_logger(), "Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
+    if(crawler_control_error_count > 0){
+        RCLCPP_WARN(node->get_logger(), "Crawler Control Error: %d", crawler_control_error_count);
+    }
+    if(command_speed_raw[0] != command_speed[0] || command_speed_raw[1] != command_speed[1]){
+        RCLCPP_WARN(node->get_logger(), "Final Command speed  : %d, %d", command_speed[0], command_speed[1]);
+    }
 
     // 左クローラー
     //if(command_speed[0] >= -5 && command_speed[0] <= 5){
@@ -317,7 +324,8 @@ int main(int argc, char** argv){
     //ros::NodeHandle nh;
 
     rclcpp::init(argc, argv);
-    node = rclcpp::Node::make_shared("lawnmower_can_topic_adapter");
+    //node = rclcpp::Node::make_shared("lawnmower_can_topic_adapter");
+    node = rclcpp::Node::make_shared("can_topic_adapter");
 
     //ros::Subscriber sub_command_to_lawnmower = nh.subscribe("command_to_lawnmower", 10, callbackCaommandToLawnmower);
     //ros::Publisher pub_topic_to_socketcan = nh.advertise<can_msgs::Frame>("sent_messages", 10);

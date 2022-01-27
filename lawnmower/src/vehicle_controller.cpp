@@ -52,8 +52,9 @@ lawnmower_msgs::msg::CommandToLawnmower makeCommandToLawnmower(){
     cmd_vel_rpm[1] = (cmd_vel.linear.x + distance_wheel / 2 * cmd_vel.angular.z) * 60 / distance_per_rot;
     //ROS_INFO("cmd_vel     : %.4f %.4f", cmd_vel.linear.x, cmd_vel.angular.z);
     //ROS_INFO("cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
-    RCLCPP_INFO(node->get_logger(), "cmd_vel     : %.4f %.4f", cmd_vel.linear.x, cmd_vel.angular.z);
-    RCLCPP_INFO(node->get_logger(), "cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
+    //RCLCPP_INFO(node->get_logger(), "cmd_vel     : %.4f %.4f", cmd_vel.linear.x, cmd_vel.angular.z);
+    RCLCPP_INFO(node->get_logger(), "cmd_vel : %.2f %.2f", cmd_vel.linear.x, cmd_vel.angular.z);
+    //RCLCPP_INFO(node->get_logger(), "cmd_vel_rpm : %d %d", cmd_vel_rpm[0], cmd_vel_rpm[1]);
 
     if(cmd_vel_rpm[0] > 0){
         if(cmd_vel_rpm[0] >= (3951 + 3290) / 2){ // 20211022追加
@@ -243,6 +244,8 @@ int main(int argc, char** argv){
         odom.twist.twist.angular.z *= 0.8;
         //pub_odom.publish(odom);
         pub_odom->publish(odom);
+        
+        RCLCPP_INFO(node->get_logger(), "odom    : %.2f %.2f", odom.twist.twist.linear.x, odom.twist.twist.angular.z);
         
         //ros::spinOnce();
         rclcpp::spin_some(node);
