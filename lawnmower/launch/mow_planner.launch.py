@@ -30,7 +30,7 @@ def generate_launch_description():
                 #'route_mode': 1,
                 'route_mode': 2,
                 'mow_width': 0.5,
-                'overlap_rate': 0.0
+                'overlap_rate': 0.2
             }],
             remappings=[('/mow_area/tf', '/tf'), ('/mow_area/tf_static', '/tf_static')]
         ),
